@@ -4,10 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 
-public class Control : MonoBehaviour {
+public class Control : MonoBehaviour
+{
+	public CardData cardsData;
 
 	List<PlayerInterface> players = new List<PlayerInterface>();
-	public static List<Card> deck = new List<Card>();
+	public List<Card> deck = new List<Card>();
 	public static List<Card> discard = new List<Card>();
 	public GameObject playerHand;
 	public GameObject contentHolder;
@@ -17,12 +19,12 @@ public class Control : MonoBehaviour {
 
 	public GameObject regCardPrefab;
 	public GameObject skipCardPrefab;
-	public GameObject revrsCardPrefab;
+	public GameObject reverseCardPrefab;
 	public GameObject drawCardPrefab;
 	public GameObject wildCardPrefab;
 
 	public GameObject[] colors = new GameObject[4];
-	string[] colorsMatch = new string[4]{"Yellow","Green","Blue","Red"};
+	string[] colorsMatch = {"Yellow","Green","Blue","Red"};
 	public GameObject[] aiPlayers = new GameObject[5];
 	public GameObject colorText;
 	public GameObject deckGO;
@@ -40,9 +42,10 @@ public class Control : MonoBehaviour {
 		discard.Clear ();
 		deck.Clear ();
 
-		players.Add (new HumanPlayer ("You"));
-		for (int i = 0; i < numbOfAI; i++) {
-			players.Add (new AiPlayer ("AI "+(i+1)));
+		players.Add(new HumanPlayer("You"));
+		for (int i = 0; i < numbOfAI; i++)
+		{
+			players.Add(new AiPlayer("AI " + (i + 1)));
 		}
 
 		for (int i = 0; i < players.Count - 1; i++) {
@@ -54,10 +57,12 @@ public class Control : MonoBehaviour {
 			for (int j = 0; j < 8; j++) {
 				switch (i) {
 					case 10:
+					{
 						deck.Add (new Card (i, returnColorName (j%4), skipCardPrefab));
+					}
 						break;
 					case 11:
-						deck.Add (new Card (i, returnColorName (j%4), revrsCardPrefab));
+						deck.Add (new Card (i, returnColorName (j%4), reverseCardPrefab));
 						break;
 					case 12:
 						deck.Add (new Card (i, returnColorName (j%4), drawCardPrefab));
@@ -70,14 +75,14 @@ public class Control : MonoBehaviour {
 						break;
 					default:
 						deck.Add (new Card (i, returnColorName (j%4), regCardPrefab));
-						break;						
+						break;
 				}
 
 				if ((i == 0 || i>=13) && j >= 3)
 					break;
 			}
 		}
-		shuffle ();
+		//shuffle ();
 
 		Card first = null;
 		if (deck [0].getNumb () < 10) {
