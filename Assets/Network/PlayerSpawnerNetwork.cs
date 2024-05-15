@@ -5,6 +5,7 @@ public class PlayerSpawnerNetwork : MonoBehaviour
 {
     private void Start()
     {
-        PhotonNetwork.Instantiate("Player", Vector3.zero, Quaternion.identity);
+        var player = PhotonNetwork.Instantiate("Player", Vector3.zero, Quaternion.identity);
+        player.name = PhotonNetwork.LocalPlayer.NickName;
     }
 }

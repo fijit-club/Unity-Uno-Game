@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using Photon.Pun;
 
 public class Control : MonoBehaviour
 {
@@ -35,23 +36,27 @@ public class Control : MonoBehaviour
 	int where=0;
 	float timer=0;
 	bool reverse=false;
+	private bool _assignedCards;
 
 	public static int numbOfAI;
 
 	void Start () { //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
+
 		discard.Clear ();
 		deck.Clear ();
 
 		players.Add(new HumanPlayer("You"));
-		for (int i = 0; i < numbOfAI; i++)
-		{
-			players.Add(new AiPlayer("AI " + (i + 1)));
-		}
+		// for (int i = 0; i < numbOfAI; i++)
+		// {
+		// 	players.Add(new AiPlayer("AI " + (i + 1)));
+		// }
 
-		for (int i = 0; i < players.Count - 1; i++) {
-			aiPlayers [i].SetActive (true);
-			aiPlayers [i].transform.Find ("Name").GetComponent<Text> ().text = players [i + 1].getName ();
-		}
+		// for (int i = 0; i < players.Count - 1; i++) {
+		// 	aiPlayers [i].SetActive (true);
+		// 	aiPlayers [i].transform.Find ("Name").GetComponent<Text> ().text = players [i + 1].getName ();
+		// }
+
+		int cardsPlaced = -1;
 
 		for (int i = 0; i < 15; i++) { //setups the deck by making cards
 			for (int j = 0; j < 8; j++) {
@@ -64,7 +69,12 @@ public class Control : MonoBehaviour
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.skip = true;
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
 					}
 						break;
 					case 11:
@@ -75,7 +85,12 @@ public class Control : MonoBehaviour
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.reverse = true;
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
 					}
 						break;
 					case 12:
@@ -86,7 +101,13 @@ public class Control : MonoBehaviour
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.draw = true;
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
 					}
 						break;
 					case 13:
@@ -97,7 +118,12 @@ public class Control : MonoBehaviour
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.wild = true;
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
 					}
 						break;
 					case 14:
@@ -108,8 +134,13 @@ public class Control : MonoBehaviour
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.wild = true;
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-						
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
+
 					}
 						break;
 					default:
@@ -119,7 +150,12 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						if (PhotonNetwork.IsMasterClient)
+						{
+							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+							cardsPlaced++;
+							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
+						}
 					}
 						break;
 				}
@@ -128,41 +164,80 @@ public class Control : MonoBehaviour
 					break;
 			}
 		}
-		shuffle ();
-
-		AssignCards();
+		//shuffle ();
+		
+		if (!PhotonNetwork.IsMasterClient) return;
+		gameNetworkHandler.gameData.cardIndices.Shuffle();
 	}
 
-	private void AssignCards()
+
+
+	public void AssignCards()
 	{
+		if (!PhotonNetwork.IsMasterClient) return;
+		_assignedCards = true;
 		Card first = null;
-		if (deck[0].getNumb() < 10)
+		if (deck[gameNetworkHandler.gameData.cardIndices[0]].getNumb() < 10)
 		{
-			first = deck[0];
+			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
 		}
 		else
 		{
-			while (deck[0].getNumb() >= 10)
+			while (deck[gameNetworkHandler.gameData.cardIndices[0]].getNumb() >= 10)
 			{
-				deck.Add(deck[0]);
-				deck.RemoveAt(0);
+				deck.Add(deck[gameNetworkHandler.gameData.cardIndices[0]]);
+				gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
+
 			}
 
-			first = deck[0];
+			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
 		}
 
 		discard.Add(first);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
-		deck.RemoveAt(0);
-
-		foreach (PlayerInterface x in players)
+		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
+		
+		for (int i = 0; i < 7; i++)
 		{
-			for (int i = 0; i < 7; i++)
+			gameNetworkHandler.gameData.players[0].playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
+			players[0].addCards(deck[gameNetworkHandler.gameData.cardIndices[0]]);
+			
+			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
+		}
+
+		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
+		{
+			var player = gameNetworkHandler.gameData.players[i];
+			for (int j = 0; j < 7; j++)
 			{
-				x.addCards(deck[0]);
-				deck.RemoveAt(0);
+				player.playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
+				gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 			}
 		}
+
+		players [0].turn ();
+		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
+	}
+
+	public void AssignCardsOnClients()
+	{
+		if (_assignedCards) return;
+		
+		discard.Add(deck[0]);
+		
+		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
+		{
+			var player = gameNetworkHandler.gameData.players[i];
+			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			{
+				foreach (int playerCardIndex in player.playerCardIndices)
+				{
+					_assignedCards = true;
+					players[0].addCards(deck[playerCardIndex]);
+				}
+			}
+		}
+		players [0].turn ();
 	}
 
 	string returnColorName (int numb) { //returns a color based on a number, used in setup
@@ -205,72 +280,66 @@ public class Control : MonoBehaviour
 		}
 		foreach (PlayerInterface i in players) {
 			if (i.getCardsLeft()==0) {
-				this.enabled = false;
-				recieveText (string.Format ("{0} won!", i.getName()));
-				endCan.SetActive (true);
-				endCan.transform.Find ("WinnerTxt").gameObject.GetComponent<Text> ().text = string.Format ("{0} Won!", i.getName ());
+				//this.enabled = false;
+				//recieveText (string.Format ("{0} won!", i.getName()));
+				//endCan.SetActive (true);
+				//endCan.transform.Find ("WinnerTxt").gameObject.GetComponent<Text> ().text = string.Format ("{0} Won!", i.getName ());
 				return true;
 			}
 		}
 		return false;
 	}
 
-	void Update () { //this runs the players turns
-
-		if (Input.GetMouseButtonDown(0))
-		{
-			print(deck[20].getNumb());
-			print(deck[20].getColor());
-		}
-		
-		bool win = updateCardsLeft ();
-		if (win)
-			return;
+	void Update () 
+	{ //this runs the players turns
+		// bool win = updateCardsLeft ();
+		// if (win)
+		// 	return;
 		if (players [where] is HumanPlayer) {
-			if (players [where].skipStatus) {
-				players [where].skipStatus = false;
-				where += reverse ? -1 : 1;
-				if (where >= players.Count)
-					where = 0;
-				else if (where < 0)
-					where = players.Count - 1;
-				return;
-			}
-			this.enabled = false;
-			PlayerInterface temp = players [where];
-			deckGO.GetComponent<Button> ().onClick.RemoveAllListeners ();
-			deckGO.GetComponent<Button> ().onClick.AddListener (() => {
-				draw (1, temp);
-				((HumanPlayer)temp).recieveDrawOnTurn();
-			});
-			where+=reverse?-1:1;
-			players [where+(reverse?1:-1)].turn ();
+			// if (players [where].skipStatus) {
+			// 	players [where].skipStatus = false;
+			// 	//where += reverse ? -1 : 1;
+			// 	if (where >= players.Count)
+			// 		where = 0;
+			// 	else if (where < 0)
+			// 		where = players.Count - 1;
+			// 	return;
+			// }
+			// PlayerInterface temp = players [where];
+			// deckGO.GetComponent<Button> ().onClick.RemoveAllListeners ();
+			// deckGO.GetComponent<Button> ().onClick.AddListener (() => {
+			// 	draw (1, temp);
+			// 	((HumanPlayer)temp).recieveDrawOnTurn();
+			// });
+			//where+=reverse?-1:1;
+			// this.enabled = false;
+			// players [where+(reverse?1:-1)].turn ();
 		}
-		else if (players [where] != null) {
-			if (players [where].skipStatus) {
-				players [where].skipStatus = false;
-				where += reverse ? -1 : 1;
-				if (where >= players.Count)
-					where = 0;
-				else if (where < 0)
-					where = players.Count - 1;
-				return;
-			}
-			timer += Time.deltaTime;
-			if (timer < 2.2)
-				return;
-			this.enabled = false;
-			timer = 0;
-			where+=reverse?-1:1;
-			players [where+(reverse?1:-1)].turn ();
-		}
-		else
-			where += reverse ? -1 : 1;
-	
-		if (where >= players.Count)
-			where = 0;
-		else if (where < 0)
-			where = players.Count - 1;
+		// else if (players [where] != null) {
+		// 	if (players [where].skipStatus) {
+		// 		players [where].skipStatus = false;
+		// 		where += reverse ? -1 : 1;
+		// 		if (where >= players.Count)
+		// 			where = 0;
+		// 		else if (where < 0)
+		// 			where = players.Count - 1;
+		// 		return;
+		// 	}
+		// 	timer += Time.deltaTime;
+		// 	if (timer < 2.2)
+		// 		return;
+		// 	this.enabled = false;
+		// 	timer = 0;
+		// 	where+=reverse?-1:1;
+		// 	players [where+(reverse?1:-1)].turn ();
+		// }
+		// else
+		// 	where += reverse ? -1 : 1;
+		//
+		// if (where >= players.Count)
+		// 	where = 0;
+		// else if (where < 0)
+		// 	where = players.Count - 1;
 			
 	}
 	public void startWild(string name) { //this starts the color chooser for the player to choose a color after playing a  wild

@@ -1,9 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Menu : MonoBehaviour {
+public class Menu : MonoBehaviourPunCallbacks
+{
+	[SerializeField] private string playerName;
+	[SerializeField] private string roomName;
 
 	public Text vers;
 	public GameObject[] cards;
@@ -90,8 +95,37 @@ public class Menu : MonoBehaviour {
 		Application.Quit ();
 	}
 	public void setup(bool openClose) { //starts the setup canvas screen
-		setupCan.SetActive (openClose);			
+		
+		PhotonNetwork.LocalPlayer.NickName = playerName;
+		CreateRoom(); //Create room
 	}
+	public void TryCreateRoom()
+	{
+		CreateRoom();
+	}
+
+	private void CreateRoom()
+	{
+		PhotonNetwork.JoinRoom(roomName);
+	}
+
+	public override void OnJoinRoomFailed(short returnCode, string message)
+	{
+		RoomOptions roomOptions = new RoomOptions();
+		roomOptions.BroadcastPropsChangeToAll = true;
+		PhotonNetwork.CreateRoom(roomName, roomOptions);
+	}
+
+	public override void OnCreateRoomFailed(short returnCode, string message)
+	{
+		PhotonNetwork.JoinRoom(roomName); //join if there is already a room
+	}
+
+	public override void OnJoinedRoom()
+	{
+		setupCan.SetActive(true);
+	}
+
 	public void play() { //finds the toggle that is on to decide how many ai players there will be
 		for (int i = 0; i < 5; i++) {
 			if (toggles [i].GetComponent<Toggle> ().isOn) {

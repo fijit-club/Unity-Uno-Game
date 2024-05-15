@@ -8,7 +8,7 @@ public class Player
     public string playerName;
     public string avatar;
     public int score = 0;
-    public List<int> cards = new List<int>();
+    public List<int> playerCardIndices = new List<int>();
 }
 
 [Serializable]
@@ -32,4 +32,5 @@ public class CardData
 public class GameData
 {
     public List<Player> players = new List<Player>();
+    public List<int> cardIndices = new List<int>();
 }
