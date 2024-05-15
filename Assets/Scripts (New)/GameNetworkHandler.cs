@@ -4,6 +4,7 @@ using UnityEngine;
 public class GameNetworkHandler : MonoBehaviour
 {
     public GameData gameData;
+    public CardInfo cardInfo;
 
     private void Start()
     {

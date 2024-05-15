@@ -24,12 +24,12 @@ public class CardData
     public string color;
     public bool wild;
     public bool reverse;
-    public bool drawCard;
+    public bool draw;
+    public bool skip;
 }
 
 [Serializable]
 public class GameData
 {
     public List<Player> players = new List<Player>();
-    public CardInfo cardInfo = new CardInfo();
 }

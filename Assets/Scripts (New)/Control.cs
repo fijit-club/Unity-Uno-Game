@@ -63,7 +63,8 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						cardData.skip = true;
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 					case 11:
@@ -73,7 +74,8 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						cardData.reverse = true;
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 					case 12:
@@ -83,7 +85,8 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						cardData.draw = true;
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 					case 13:
@@ -93,7 +96,8 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						cardData.wild = true;
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 					case 14:
@@ -103,7 +107,8 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						cardData.wild = true;
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 						
 					}
 						break;
@@ -114,7 +119,7 @@ public class Control : MonoBehaviour
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 				}
