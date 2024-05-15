@@ -91,7 +91,7 @@ public class Control : MonoBehaviour {
 			first = deck [0];
 		}
 		discard.Add (first);
-		discardPileObj = first.loadCard (725, -325, GameObject.Find ("Main").transform);
+		discardPileObj = first.loadCard (0, 0, GameObject.Find ("Main").transform);
 		deck.RemoveAt (0);
 
 		foreach (PlayerInterface x in players) {
@@ -129,7 +129,7 @@ public class Control : MonoBehaviour {
 	public void updateDiscPile(Card card) { //this changes the last card played. Top of the discard pile
 		discard.Add (card);
 		Destroy(discardPileObj);
-		discardPileObj=card.loadCard (725, -325, GameObject.Find ("Main").transform);
+		discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
 		discardPileObj.transform.SetSiblingIndex(9);
 	}
 	public bool updateCardsLeft() { //this updates the number below each ai, so the player knows how many cards they have left
@@ -213,7 +213,7 @@ public class Control : MonoBehaviour {
 			recieveText(string.Format("{0} played a wild, Color: {1}",name,colorsMatch[i]));
 
 			Destroy(discardPileObj);
-			discardPileObj=discard[discard.Count-1].loadCard (725, -325, GameObject.Find ("Main").transform);
+			discardPileObj=discard[discard.Count-1].loadCard (0, 0, GameObject.Find ("Main").transform);
 			discardPileObj.transform.SetSiblingIndex(9);
 			 
 			foreach (GameObject x in colors) {
