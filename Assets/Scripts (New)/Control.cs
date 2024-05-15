@@ -6,7 +6,7 @@ using System.Linq;
 
 public class Control : MonoBehaviour
 {
-	public CardData cardsData;
+	[SerializeField] private GameNetworkHandler gameNetworkHandler;
 
 	List<PlayerInterface> players = new List<PlayerInterface>();
 	public List<Card> deck = new List<Card>();
@@ -58,23 +58,64 @@ public class Control : MonoBehaviour
 				switch (i) {
 					case 10:
 					{
-						deck.Add (new Card (i, returnColorName (j%4), skipCardPrefab));
+						var card = new Card(i, returnColorName(j % 4), skipCardPrefab);
+						deck.Add (card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
 					}
 						break;
 					case 11:
-						deck.Add (new Card (i, returnColorName (j%4), reverseCardPrefab));
+					{
+						var card = new Card(i, returnColorName(j % 4), reverseCardPrefab);
+						deck.Add(card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+					}
 						break;
 					case 12:
-						deck.Add (new Card (i, returnColorName (j%4), drawCardPrefab));
+					{
+						var card = new Card(i, returnColorName(j % 4), drawCardPrefab);
+						deck.Add(card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+					}
 						break;
 					case 13:
-						deck.Add (new Card (i, "Black", wildCardPrefab));
+					{
+						var card = new Card(i, "Black", wildCardPrefab);
+						deck.Add (card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+					}
 						break;
 					case 14:
-						deck.Add (new Card (i, "Black", wildCardPrefab));
+					{
+						var card = new Card(i, "Black", wildCardPrefab);
+						deck.Add (card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+						
+					}
 						break;
 					default:
-						deck.Add (new Card (i, returnColorName (j%4), regCardPrefab));
+					{
+						var card = new Card(i, returnColorName(j % 4), regCardPrefab);
+						deck.Add(card);
+						CardData cardData = new CardData();
+						cardData.color = card.getColor();
+						cardData.cardNumber = card.getNumb();
+						gameNetworkHandler.gameData.cardInfo.mainDeck.Add(cardData);
+					}
 						break;
 				}
 
@@ -82,30 +123,43 @@ public class Control : MonoBehaviour
 					break;
 			}
 		}
-		//shuffle ();
+		shuffle ();
 
+		AssignCards();
+	}
+
+	private void AssignCards()
+	{
 		Card first = null;
-		if (deck [0].getNumb () < 10) {
-			first = deck [0];
+		if (deck[0].getNumb() < 10)
+		{
+			first = deck[0];
 		}
-		else {
-			while (deck [0].getNumb () >= 10) {
-				deck.Add (deck [0]);
-				deck.RemoveAt (0);
+		else
+		{
+			while (deck[0].getNumb() >= 10)
+			{
+				deck.Add(deck[0]);
+				deck.RemoveAt(0);
 			}
-			first = deck [0];
-		}
-		discard.Add (first);
-		discardPileObj = first.loadCard (0, 0, GameObject.Find ("Main").transform);
-		deck.RemoveAt (0);
 
-		foreach (PlayerInterface x in players) {
-			for (int i = 0; i < 7; i++) {
-				x.addCards (deck [0]);
-				deck.RemoveAt (0);
+			first = deck[0];
+		}
+
+		discard.Add(first);
+		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
+		deck.RemoveAt(0);
+
+		foreach (PlayerInterface x in players)
+		{
+			for (int i = 0; i < 7; i++)
+			{
+				x.addCards(deck[0]);
+				deck.RemoveAt(0);
 			}
 		}
 	}
+
 	string returnColorName (int numb) { //returns a color based on a number, used in setup
 		switch(numb) {
 		case 0: 
@@ -119,6 +173,8 @@ public class Control : MonoBehaviour
 		}
 		return "";
 	}
+	
+	
 	void shuffle() { //shuffles the deck by changing cards around
 		for (int i = 0; i < deck.Count; i++) {
 			Card temp = deck.ElementAt (i);
@@ -155,6 +211,13 @@ public class Control : MonoBehaviour
 	}
 
 	void Update () { //this runs the players turns
+
+		if (Input.GetMouseButtonDown(0))
+		{
+			print(deck[20].getNumb());
+			print(deck[20].getColor());
+		}
+		
 		bool win = updateCardsLeft ();
 		if (win)
 			return;

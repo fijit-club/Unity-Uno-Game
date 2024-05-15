@@ -12,6 +12,12 @@ public class Player
 }
 
 [Serializable]
+public class CardInfo
+{
+    public List<CardData> mainDeck = new List<CardData>();
+}
+
+[Serializable]
 public class CardData
 {
     public int cardNumber;
@@ -25,4 +31,5 @@ public class CardData
 public class GameData
 {
     public List<Player> players = new List<Player>();
+    public CardInfo cardInfo = new CardInfo();
 }
