@@ -21,6 +21,13 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         gameData = tempGameData;
         
         control.AssignCardsOnClients();
+        UpdateTurns();
+    }
+
+    private void UpdateTurns()
+    {
+        if (gameData.currentTurn == PhotonNetwork.LocalPlayer.NickName)
+            control.myTurn = true;
     }
 
     public void StartGame()

@@ -72,7 +72,7 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 					
 		}
 		else {
-			GameObject.Find ("Control").GetComponent<Control> ().draw (1, this);
+			GameObject.Find ("Control").GetComponent<Control> ().draw (1);
 			drew = true;
 		}
 
@@ -135,5 +135,10 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 	}
 	public int getCardsLeft() { //returns cards left
 		return handList.Count;
+	}
+
+	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control)
+	{
+		
 	}
 }

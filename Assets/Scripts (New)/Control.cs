@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using Photon.Pun;
 using TMPro;
+using Random = UnityEngine.Random;
 
 public class Control : MonoBehaviour
 {
@@ -12,7 +14,7 @@ public class Control : MonoBehaviour
 	
 	[SerializeField] private GameNetworkHandler gameNetworkHandler;
 
-	List<PlayerInterface> players = new List<PlayerInterface>();
+	public List<PlayerInterface> players = new List<PlayerInterface>();
 	public List<Card> deck = new List<Card>();
 	public static List<Card> discard = new List<Card>();
 	public GameObject playerHand;
@@ -229,7 +231,7 @@ public class Control : MonoBehaviour
 	{
 		currentTurnPlayerText.text = gameNetworkHandler.gameData.currentTurn + "'s turn.";
 
-		if (_assignedCards) return;
+		if (_assignedCards || PhotonNetwork.IsMasterClient) return;
 		
 		Card first = deck[gameNetworkHandler.gameData.topDiscardedCardIndex];
 		discard.Add(first);
@@ -247,7 +249,8 @@ public class Control : MonoBehaviour
 				}
 			}
 		}
-		players [0].turn ();
+
+		players[0].turn();
 	}
 
 	string returnColorName (int numb) { //returns a color based on a number, used in setup
@@ -281,10 +284,12 @@ public class Control : MonoBehaviour
 	}
 	
 	public void updateDiscPile(Card card) { //this changes the last card played. Top of the discard pile
+		discard.Clear();
 		discard.Add (card);
 		Destroy(discardPileObj);
 		discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
-		discardPileObj.transform.SetSiblingIndex(9);
+		players[0].turn();
+		//discardPileObj.transform.SetSiblingIndex(9);
 	}
 	public bool updateCardsLeft() { //this updates the number below each ai, so the player knows how many cards they have left
 		for (int i = 0; i < players.Count - 1; i++) {
@@ -302,59 +307,7 @@ public class Control : MonoBehaviour
 		}
 		return false;
 	}
-
-	void Update () 
-	{ //this runs the players turns
-		// bool win = updateCardsLeft ();
-		// if (win)
-		// 	return;
-		if (players [where] is HumanPlayer) {
-			// if (players [where].skipStatus) {
-			// 	players [where].skipStatus = false;
-			// 	//where += reverse ? -1 : 1;
-			// 	if (where >= players.Count)
-			// 		where = 0;
-			// 	else if (where < 0)
-			// 		where = players.Count - 1;
-			// 	return;
-			// }
-			// PlayerInterface temp = players [where];
-			// deckGO.GetComponent<Button> ().onClick.RemoveAllListeners ();
-			// deckGO.GetComponent<Button> ().onClick.AddListener (() => {
-			// 	draw (1, temp);
-			// 	((HumanPlayer)temp).recieveDrawOnTurn();
-			// });
-			//where+=reverse?-1:1;
-			// this.enabled = false;
-			// players [where+(reverse?1:-1)].turn ();
-		}
-		// else if (players [where] != null) {
-		// 	if (players [where].skipStatus) {
-		// 		players [where].skipStatus = false;
-		// 		where += reverse ? -1 : 1;
-		// 		if (where >= players.Count)
-		// 			where = 0;
-		// 		else if (where < 0)
-		// 			where = players.Count - 1;
-		// 		return;
-		// 	}
-		// 	timer += Time.deltaTime;
-		// 	if (timer < 2.2)
-		// 		return;
-		// 	this.enabled = false;
-		// 	timer = 0;
-		// 	where+=reverse?-1:1;
-		// 	players [where+(reverse?1:-1)].turn ();
-		// }
-		// else
-		// 	where += reverse ? -1 : 1;
-		//
-		// if (where >= players.Count)
-		// 	where = 0;
-		// else if (where < 0)
-		// 	where = players.Count - 1;
-			
-	}
+	
 	public void startWild(string name) { //this starts the color chooser for the player to choose a color after playing a  wild
 		for (int i = 0; i < 4; i++) {
 			colors [i].SetActive (true);
@@ -379,14 +332,35 @@ public class Control : MonoBehaviour
 			this.enabled=true;
 		});
 	}
-	public void draw(int amount, PlayerInterface who) { //gives cards to the players. Players can ask to draw or draw will actrivate from special cards
+
+	public void PlayerDraw()
+	{
+		if (myTurn)
+		{
+			myTurn = false;
+			recieveText ($"{PhotonNetwork.LocalPlayer.NickName} drew a card");
+			players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
+			draw(1);
+		}
+	}
+	
+	public void draw(int amount) { //gives cards to the players. Players can ask to draw or draw will actrivate from special cards
 		if (deck.Count < amount) {
 			resetDeck ();
 		}
 		for (int i = 0; i < amount; i++) {
-			who.addCards (deck [0]);
-			deck.RemoveAt (0);
+			players[0].addCards (deck [gameNetworkHandler.gameData.cardIndices[0]]);
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+				{
+					player.playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
+				}
+			}
+			gameNetworkHandler.gameData.cardIndices.RemoveAt (0);
 		}
+		players[0].turn();
+		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
 	}
 	public void resetDeck() { //this resets the deck when all of the cards run out
 		print ("reseting");
@@ -433,10 +407,10 @@ public class Control : MonoBehaviour
 				}
 				break;
 			case 12:
-				draw (2, players [who]);
+				draw (2);
 				break;
 			case 14:
-				draw (4, players [who]);
+				draw (4);
 				break;
 		}
 		if(cardNumb!=14)
@@ -471,7 +445,7 @@ public class Control : MonoBehaviour
 		}
 		Destroy(discardPileObj);
 		where = 0;
-		Start ();
+		//Start ();
 		this.enabled = true;
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class Menu : MonoBehaviourPunCallbacks
@@ -123,7 +124,7 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	public override void OnJoinedRoom()
 	{
-		setupCan.SetActive(true);
+		SceneManager.LoadScene(2);
 	}
 
 	public void play() { //finds the toggle that is on to decide how many ai players there will be
