@@ -4,9 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using Photon.Pun;
+using TMPro;
 
 public class Control : MonoBehaviour
 {
+	public bool myTurn;
+	
 	[SerializeField] private GameNetworkHandler gameNetworkHandler;
 
 	List<PlayerInterface> players = new List<PlayerInterface>();
@@ -39,13 +42,14 @@ public class Control : MonoBehaviour
 	private bool _assignedCards;
 
 	public static int numbOfAI;
-
+	[SerializeField] private TMP_Text currentTurnPlayerText;
+	
 	void Start () { //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
 
 		discard.Clear ();
 		deck.Clear ();
 
-		players.Add(new HumanPlayer("You"));
+		players.Add(new HumanPlayer(PhotonNetwork.LocalPlayer.NickName));
 		// for (int i = 0; i < numbOfAI; i++)
 		// {
 		// 	players.Add(new AiPlayer("AI " + (i + 1)));
@@ -170,16 +174,17 @@ public class Control : MonoBehaviour
 		gameNetworkHandler.gameData.cardIndices.Shuffle();
 	}
 
-
-
 	public void AssignCards()
 	{
 		if (!PhotonNetwork.IsMasterClient) return;
+		gameNetworkHandler.gameData.currentTurn = PhotonNetwork.LocalPlayer.NickName;
+		myTurn = true;
 		_assignedCards = true;
 		Card first = null;
 		if (deck[gameNetworkHandler.gameData.cardIndices[0]].getNumb() < 10)
 		{
 			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
+			gameNetworkHandler.gameData.topDiscardedCardIndex = gameNetworkHandler.gameData.cardIndices[0];
 		}
 		else
 		{
@@ -191,6 +196,7 @@ public class Control : MonoBehaviour
 			}
 
 			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
+			gameNetworkHandler.gameData.topDiscardedCardIndex = gameNetworkHandler.gameData.cardIndices[0];
 		}
 
 		discard.Add(first);
@@ -221,10 +227,14 @@ public class Control : MonoBehaviour
 
 	public void AssignCardsOnClients()
 	{
+		currentTurnPlayerText.text = gameNetworkHandler.gameData.currentTurn + "'s turn.";
+
 		if (_assignedCards) return;
 		
-		discard.Add(deck[0]);
-		
+		Card first = deck[gameNetworkHandler.gameData.topDiscardedCardIndex];
+		discard.Add(first);
+		first.loadCard(0, 0, GameObject.Find("Main").transform);
+
 		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 		{
 			var player = gameNetworkHandler.gameData.players[i];
@@ -263,10 +273,13 @@ public class Control : MonoBehaviour
 			deck [posSwitch] = temp;
 		}
 	}
-	public void recieveText(string text) { //updates the dialogue box
+	public void recieveText(string text, bool sendToOthers = true) { //updates the dialogue box
 		dialogueText.text += text + "\n";
 		contentHolder.GetComponent<RectTransform> ().localPosition = new Vector2 (0, contentHolder.GetComponent<RectTransform> ().sizeDelta.y);
+		if (sendToOthers)
+			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text);
 	}
+	
 	public void updateDiscPile(Card card) { //this changes the last card played. Top of the discard pile
 		discard.Add (card);
 		Destroy(discardPileObj);

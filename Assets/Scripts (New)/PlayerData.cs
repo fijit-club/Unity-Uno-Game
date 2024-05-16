@@ -33,4 +33,6 @@ public class GameData
 {
     public List<Player> players = new List<Player>();
     public List<int> cardIndices = new List<int>();
+    public string currentTurn;
+    public int topDiscardedCardIndex;
 }

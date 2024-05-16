@@ -18,4 +18,10 @@ public class ClientHandler : MonoBehaviour
             gameNetworkHandler.StartGame();
         }
     }
+
+    [PunRPC]
+    private void SendGameLog(string text)
+    {
+        FindObjectOfType<Control>().recieveText(text, false);
+    }
 }

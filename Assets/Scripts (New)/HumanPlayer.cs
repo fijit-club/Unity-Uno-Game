@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -44,11 +45,14 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	}
 	public void setListeners(int where,GameObject temp) { //sets all listeners on the cards
 		temp.GetComponent<Button> ().onClick.AddListener (() => {
-			playedWild = handList[where].getNumb()>=13;
+			if (FindObjectOfType<Control>().myTurn)
+			{
+				playedWild = handList[where].getNumb() >= 13;
 
-			temp.GetComponent<Button>().onClick.RemoveAllListeners();
-			Destroy (temp);
-			turnEnd(where);
+				temp.GetComponent<Button>().onClick.RemoveAllListeners();
+				Destroy(temp);
+				turnEnd(where);
+			}
 		});
 	}
 	public void addCards(Card other) { //recieves cards to add to the hand

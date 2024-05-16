@@ -11,6 +11,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public CardInfo cardInfo;
 
     [SerializeField] private Control control;
+    [SerializeField] private GameObject waitingUI;
     
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
@@ -25,6 +26,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public void StartGame()
     {
         control.AssignCards();
+        waitingUI.SetActive(false);
     }
 
     private void Start()
@@ -38,6 +40,8 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     private void SendRPCToMaster()
     {
         FindObjectOfType<PhotonView>().RPC("RegisterPlayer", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.NickName);
+        if (PhotonNetwork.PlayerList.Length >= maxPlayers)
+            waitingUI.SetActive(false);
     }
 
     private void AddMasterPlayer()
