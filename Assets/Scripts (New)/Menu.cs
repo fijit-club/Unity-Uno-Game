@@ -124,7 +124,7 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	public override void OnJoinedRoom()
 	{
-		SceneManager.LoadScene(2);
+		SceneManager.LoadScene(1);
 	}
 
 	public void play() { //finds the toggle that is on to decide how many ai players there will be

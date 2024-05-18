@@ -1,9 +1,12 @@
+using System;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ServerConnection : MonoBehaviourPunCallbacks
 {
+    [SerializeField] private GameObject[] stuffToActivate;
+    
     private void Start()
     {
         PhotonNetwork.ConnectUsingSettings();
@@ -16,6 +19,9 @@ public class ServerConnection : MonoBehaviourPunCallbacks
 
     public override void OnJoinedLobby()
     {
-        SceneManager.LoadScene(1);
+        foreach (var stuff in stuffToActivate)
+        {
+            stuff.SetActive(true);
+        }
     }
 }

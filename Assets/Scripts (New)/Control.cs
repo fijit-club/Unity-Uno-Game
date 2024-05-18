@@ -15,11 +15,12 @@ public class Control : MonoBehaviour
 	[SerializeField] private GameNetworkHandler gameNetworkHandler;
 
 	public List<PlayerInterface> players = new List<PlayerInterface>();
-	public List<Card> deck = new List<Card>();
-	public static List<Card> discard = new List<Card>();
+	//public List<int> deck = new List<int>();
+	//public List<int> discard = new List<int>();
 	public GameObject playerHand;
 	public GameObject contentHolder;
 	public Text dialogueText;
+	public string wildColor;
 
 	public static GameObject discardPileObj;
 
@@ -48,9 +49,6 @@ public class Control : MonoBehaviour
 	
 	void Start () { //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
 
-		discard.Clear ();
-		deck.Clear ();
-
 		players.Add(new HumanPlayer(PhotonNetwork.LocalPlayer.NickName));
 		// for (int i = 0; i < numbOfAI; i++)
 		// {
@@ -70,98 +68,80 @@ public class Control : MonoBehaviour
 					case 10:
 					{
 						var card = new Card(i, returnColorName(j % 4), skipCardPrefab);
-						deck.Add (card);
 						CardData cardData = new CardData();
+						cardData.cardPrefab = skipCardPrefab;
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.skip = true;
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 					}
 						break;
 					case 11:
 					{
 						var card = new Card(i, returnColorName(j % 4), reverseCardPrefab);
-						deck.Add(card);
 						CardData cardData = new CardData();
+						cardData.cardPrefab = reverseCardPrefab;
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.reverse = true;
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 					}
 						break;
 					case 12:
 					{
 						var card = new Card(i, returnColorName(j % 4), drawCardPrefab);
-						deck.Add(card);
 						CardData cardData = new CardData();
+						cardData.cardPrefab = drawCardPrefab;
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
 						cardData.draw = true;
 
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 					}
 						break;
 					case 13:
 					{
 						var card = new Card(i, "Black", wildCardPrefab);
-						deck.Add (card);
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
+						cardData.cardPrefab = wildCardPrefab;
 						cardData.cardNumber = card.getNumb();
 						cardData.wild = true;
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 					}
 						break;
 					case 14:
 					{
 						var card = new Card(i, "Black", wildCardPrefab);
-						deck.Add (card);
 						CardData cardData = new CardData();
 						cardData.color = card.getColor();
+						cardData.cardPrefab = wildCardPrefab;
 						cardData.cardNumber = card.getNumb();
 						cardData.wild = true;
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 
 					}
 						break;
 					default:
 					{
 						var card = new Card(i, returnColorName(j % 4), regCardPrefab);
-						deck.Add(card);
 						CardData cardData = new CardData();
+						cardData.cardPrefab = regCardPrefab;
 						cardData.color = card.getColor();
 						cardData.cardNumber = card.getNumb();
-						if (PhotonNetwork.IsMasterClient)
-						{
-							gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
-							cardsPlaced++;
-							gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
-						}
+						gameNetworkHandler.cardInfo.mainDeck.Add(cardData);
+						cardsPlaced++;
+						gameNetworkHandler.gameData.cardIndices.Add(cardsPlaced);
 					}
 						break;
 				}
@@ -183,32 +163,40 @@ public class Control : MonoBehaviour
 		myTurn = true;
 		_assignedCards = true;
 		Card first = null;
-		if (deck[gameNetworkHandler.gameData.cardIndices[0]].getNumb() < 10)
+		if (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber < 10)
 		{
-			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
-			gameNetworkHandler.gameData.topDiscardedCardIndex = gameNetworkHandler.gameData.cardIndices[0];
+			first = new Card(
+				gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber,
+				gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].color, regCardPrefab);
+			
+			gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
+			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		}
 		else
 		{
-			while (deck[gameNetworkHandler.gameData.cardIndices[0]].getNumb() >= 10)
+			while (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber >= 10)
 			{
-				deck.Add(deck[gameNetworkHandler.gameData.cardIndices[0]]);
+				gameNetworkHandler.gameData.cardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 				gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 
 			}
-
-			first = deck[gameNetworkHandler.gameData.cardIndices[0]];
-			gameNetworkHandler.gameData.topDiscardedCardIndex = gameNetworkHandler.gameData.cardIndices[0];
+			
+			gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
+			var topCard = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices[0]];
+			first = new Card(topCard.cardNumber, topCard.color, topCard.cardPrefab);
 		}
 
-		discard.Add(first);
+		//gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
 		for (int i = 0; i < 7; i++)
 		{
 			gameNetworkHandler.gameData.players[0].playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
-			players[0].addCards(deck[gameNetworkHandler.gameData.cardIndices[0]]);
+			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
+			Card playerCard = new Card(cardData.cardNumber,
+				cardData.color, cardData.cardPrefab);
+			players[0].addCards(playerCard);
 			
 			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		}
@@ -232,20 +220,29 @@ public class Control : MonoBehaviour
 		currentTurnPlayerText.text = gameNetworkHandler.gameData.currentTurn + "'s turn.";
 
 		if (_assignedCards || PhotonNetwork.IsMasterClient) return;
-		
-		Card first = deck[gameNetworkHandler.gameData.topDiscardedCardIndex];
-		discard.Add(first);
-		first.loadCard(0, 0, GameObject.Find("Main").transform);
 
-		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
+		print(gameNetworkHandler.cardInfo.mainDeck.Count);
+		print(gameNetworkHandler.gameData.discardedCardIndices.Count);
+		if (gameNetworkHandler.gameData.discardedCardIndices.Count > 0)
 		{
-			var player = gameNetworkHandler.gameData.players[i];
-			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices[0]];
+			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			first.loadCard(0, 0, GameObject.Find("Main").transform);
+
+			for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 			{
-				foreach (int playerCardIndex in player.playerCardIndices)
+				var player = gameNetworkHandler.gameData.players[i];
+				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
 				{
-					_assignedCards = true;
-					players[0].addCards(deck[playerCardIndex]);
+					foreach (int playerCardIndex in player.playerCardIndices)
+					{
+						_assignedCards = true;
+
+						var cardDataPlayer = gameNetworkHandler.cardInfo.mainDeck[playerCardIndex];
+						Card card = new Card(cardDataPlayer.cardNumber, cardDataPlayer.color,
+							cardDataPlayer.cardPrefab);
+						players[0].addCards(card);
+					}
 				}
 			}
 		}
@@ -267,26 +264,20 @@ public class Control : MonoBehaviour
 		return "";
 	}
 	
-	
-	void shuffle() { //shuffles the deck by changing cards around
-		for (int i = 0; i < deck.Count; i++) {
-			Card temp = deck.ElementAt (i);
-			int posSwitch = Random.Range (0, deck.Count);
-			deck [i] = deck [posSwitch];
-			deck [posSwitch] = temp;
-		}
-	}
 	public void recieveText(string text, bool sendToOthers = true) { //updates the dialogue box
 		dialogueText.text += text + "\n";
 		contentHolder.GetComponent<RectTransform> ().localPosition = new Vector2 (0, contentHolder.GetComponent<RectTransform> ().sizeDelta.y);
 		if (sendToOthers)
 			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text);
 	}
-	
-	public void updateDiscPile(Card card) { //this changes the last card played. Top of the discard pile
-		discard.Clear();
-		discard.Add (card);
+
+	public void updateDiscPile(int cardIndex) { //this changes the last card played. Top of the discard pile
+		gameNetworkHandler.gameData.discardedCardIndices.Add (cardIndex);
 		Destroy(discardPileObj);
+
+		var cardData = gameNetworkHandler.cardInfo.mainDeck[cardIndex];
+		Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+		
 		discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
 		players[0].turn();
 		//discardPileObj.transform.SetSiblingIndex(9);
@@ -308,21 +299,22 @@ public class Control : MonoBehaviour
 		return false;
 	}
 	
-	public void startWild(string name) { //this starts the color chooser for the player to choose a color after playing a  wild
+	public void startWild(string name, int cardIndex, int specNumb) { //this starts the color chooser for the player to choose a color after playing a  wild
 		for (int i = 0; i < 4; i++) {
 			colors [i].SetActive (true);
-			addWildListeners (i, name);
+			addWildListeners (i, name, cardIndex, specNumb);
 		}
 		colorText.SetActive (true);
 	}
-	public void addWildListeners(int i, string name) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
+	public void addWildListeners(int i, string name, int cardIndex, int specNumb) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
 		colors [i].GetComponent<Button> ().onClick.AddListener (() => {
-			discard[discard.Count-1].changeColor(colorsMatch[i]);
-			recieveText(string.Format("{0} played a wild, Color: {1}",name,colorsMatch[i]));
-
+			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
+			wildColor = colorsMatch[i];
+			recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
+		
 			Destroy(discardPileObj);
-			discardPileObj=discard[discard.Count-1].loadCard (0, 0, GameObject.Find ("Main").transform);
-			discardPileObj.transform.SetSiblingIndex(9);
+			Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
 			 
 			foreach (GameObject x in colors) {
 				x.SetActive (false);
@@ -330,6 +322,11 @@ public class Control : MonoBehaviour
 			}
 			colorText.SetActive (false);
 			this.enabled=true;
+			FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "color",
+				wildColor, cardIndex);
+		
+			players[0].NextPlayersTurn(gameNetworkHandler, this);
+			FindObjectOfType<Control>().players[0].turn();
 		});
 	}
 
@@ -345,11 +342,13 @@ public class Control : MonoBehaviour
 	}
 	
 	public void draw(int amount) { //gives cards to the players. Players can ask to draw or draw will actrivate from special cards
-		if (deck.Count < amount) {
+		if (gameNetworkHandler.gameData.cardIndices.Count < amount) {
 			resetDeck ();
 		}
 		for (int i = 0; i < amount; i++) {
-			players[0].addCards (deck [gameNetworkHandler.gameData.cardIndices[0]]);
+			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
+			Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			players[0].addCards (card);
 			foreach (var player in gameNetworkHandler.gameData.players)
 			{
 				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
@@ -363,17 +362,18 @@ public class Control : MonoBehaviour
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
 	}
 	public void resetDeck() { //this resets the deck when all of the cards run out
-		print ("reseting");
-		foreach (Card x in discard) {
-			if (x.getNumb () == 13 || x.getNumb () == 14) {
-				x.changeColor ("Black");
-			}
-			deck.Add (x);
-		}
-		shuffle ();
-		Card last = discard [discard.Count - 1];
-		discard.Clear ();
-		discard.Add (last);
+		// print ("reseting");
+		// foreach (int x in discard) {
+		// 	var cardData = gameNetworkHandler.cardInfo.mainDeck[x];
+		// 	if (cardData.cardNumber == 13 || cardData.cardNumber == 14) {
+		// 		x.changeColor ("Black");
+		// 	}
+		// 	deck.Add (x);
+		//}
+		// shuffle ();
+		// Card last = discard [discard.Count - 1];
+		// discard.Clear ();
+		// discard.Add (last);
 	}
 	public void specialCardPlay(PlayerInterface player, int cardNumb) { //takes care of all special cards played
 		int who = players.FindIndex (e=>e.Equals(player)) + (reverse?-1:1);

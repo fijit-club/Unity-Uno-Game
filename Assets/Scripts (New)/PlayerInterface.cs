@@ -4,6 +4,7 @@ using UnityEngine;
 
 public interface PlayerInterface { //the interface the is inherited by the player objs
 	void turn();
+	
 	bool skipStatus {
 		get;
 		set;

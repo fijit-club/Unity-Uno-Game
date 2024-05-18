@@ -23,64 +23,64 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 	}
 
 	public void turn() { //the ai's turn
-		Card currDisc = Control.discard [Control.discard.Count - 1];
-		string colorDisc = currDisc.getColor ();
-		int numbDisc = currDisc.getNumb ();
-		if (numbDisc == 13 || numbDisc == 14)
-			numbDisc = -1;
-
-		locationCardPlayed = -1;
-		colorToPlay = "";
-		drew = false;
-
-		handList = handList.OrderBy (e => e.getColor()).ThenBy(e => e.getNumb ()).ToList();
-		
-		int count = handList.Count (e => e.getColor () == colorDisc); //does counts of how many cards it has, either color, number, or wild
-		int count2 = handList.Count (e => e.getNumb () == numbDisc);
-		int count3 = handList.Count (e => e.getNumb () == 13 || e.getNumb () == 14);
-
-		if (count > 0) 
-			locationCardPlayed = handList.FindLastIndex (e => e.getColor () == colorDisc);
-		
-		else if (count2 > 0) 
-			locationCardPlayed = handList.FindIndex (e => e.getNumb () == numbDisc);
-
-		else if (count3 > 0) {
-			locationCardPlayed = handList.FindIndex (e => e.getNumb () == 13 || e.getNumb()==14);
-			colorToPlay = handList.Max (e => e.getColor ());
-			if (colorToPlay.Equals ("Black")) {
-				bool first = true;
-				while(colorToPlay.Equals(colorDisc) || first) {
-					int rand = Random.Range (1, 4);
-					switch (rand) {
-						case 1:
-							colorToPlay = "Red";
-							break;
-						case 2:
-							colorToPlay = "Blue";
-							break;
-						case 3:
-							colorToPlay = "Green";
-							break;
-						case 4:
-							colorToPlay = "Yellow";
-							break;
-					}
-					first = false;
-				}
-			}
-					
-		}
-		else {
-			GameObject.Find ("Control").GetComponent<Control> ().draw (1);
-			drew = true;
-		}
-
-		if (locationCardPlayed == -1 && !drew) 
-			return;
-		
-		else 
-			turnEnd ();
+	// 	// currDisc = Control.discard [Control.discard.Count - 1];
+	// 	// string colorDisc = currDisc.getColor ();
+	// 	// int numbDisc = currDisc.getNumb ();
+	// 	// if (numbDisc == 13 || numbDisc == 14)
+	// 	// 	numbDisc = -1;
+	//
+	// 	locationCardPlayed = -1;
+	// 	colorToPlay = "";
+	// 	drew = false;
+	//
+	// 	handList = handList.OrderBy (e => e.getColor()).ThenBy(e => e.getNumb ()).ToList();
+	// 	
+	// 	int count = handList.Count (e => e.getColor () == colorDisc); //does counts of how many cards it has, either color, number, or wild
+	// 	int count2 = handList.Count (e => e.getNumb () == numbDisc);
+	// 	int count3 = handList.Count (e => e.getNumb () == 13 || e.getNumb () == 14);
+	//
+	// 	if (count > 0) 
+	// 		locationCardPlayed = handList.FindLastIndex (e => e.getColor () == colorDisc);
+	// 	
+	// 	else if (count2 > 0) 
+	// 		locationCardPlayed = handList.FindIndex (e => e.getNumb () == numbDisc);
+	//
+	// 	else if (count3 > 0) {
+	// 		locationCardPlayed = handList.FindIndex (e => e.getNumb () == 13 || e.getNumb()==14);
+	// 		colorToPlay = handList.Max (e => e.getColor ());
+	// 		if (colorToPlay.Equals ("Black")) {
+	// 			bool first = true;
+	// 			while(colorToPlay.Equals(colorDisc) || first) {
+	// 				int rand = Random.Range (1, 4);
+	// 				switch (rand) {
+	// 					case 1:
+	// 						colorToPlay = "Red";
+	// 						break;
+	// 					case 2:
+	// 						colorToPlay = "Blue";
+	// 						break;
+	// 					case 3:
+	// 						colorToPlay = "Green";
+	// 						break;
+	// 					case 4:
+	// 						colorToPlay = "Yellow";
+	// 						break;
+	// 				}
+	// 				first = false;
+	// 			}
+	// 		}
+	// 				
+	// 	}
+	// 	else {
+	// 		GameObject.Find ("Control").GetComponent<Control> ().draw (1);
+	// 		drew = true;
+	// 	}
+	//
+	// 	if (locationCardPlayed == -1 && !drew) 
+	// 		return;
+	// 	
+	// 	else 
+	// 		turnEnd ();
 	}
 
 	public void addCards(Card other) { //recieves cards to the hand
@@ -124,7 +124,7 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 				cont.enabled = true;
 			}
 		}
-		cont.updateDiscPile(handList[locationCardPlayed]);
+		//cont.updateDiscPile(handList[locationCardPlayed]);
 		handList.RemoveAt (locationCardPlayed);
 	}
 	public bool Equals(PlayerInterface other) { //equals

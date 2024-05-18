@@ -33,14 +33,13 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
-    private void UpdateDiscardRegular(int cardNumber, string cardColor)
+    private void UpdateDiscardRegular(int cardNumber)
     {
-        Card card = new Card(cardNumber, cardColor, _control.regCardPrefab);
-        _control.updateDiscPile(card);
+        _control.updateDiscPile(cardNumber);
     }
 
     [PunRPC]
-    private void UpdateDiscardSpecial(int cardNumber, string cardName, string cardColor)
+    private void UpdateDiscardSpecial(int cardNumber, string cardName, string cardColor, int cardIndex)
     {
         Card card;
         if (string.Equals(cardName, "reverse"))
@@ -49,8 +48,13 @@ public class ClientHandler : MonoBehaviour
             card = new Card(cardNumber, cardColor, _control.skipCardPrefab);
         else if (string.Equals(cardName, "draw"))
             card = new Card(cardNumber, cardColor, _control.drawCardPrefab);
+        else if (string.Equals(cardName, "color"))
+        {
+            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
+            _control.wildColor = cardColor;
+        }
         else
             card = null;
-        _control.updateDiscPile(card);
+        _control.updateDiscPile(cardIndex);
     }
 }

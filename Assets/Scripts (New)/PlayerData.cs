@@ -26,6 +26,7 @@ public class CardData
     public bool reverse;
     public bool draw;
     public bool skip;
+    public GameObject cardPrefab;
 }
 
 [Serializable]
@@ -35,5 +36,5 @@ public class GameData
     public List<int> cardIndices = new List<int>();
     public string currentTurn;
     public int currentTurnIndex;
-    public int topDiscardedCardIndex;
+    public List<int> discardedCardIndices;
 }
