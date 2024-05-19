@@ -6,7 +6,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameNetworkHandler : MonoBehaviourPunCallbacks
 {
-    public int maxPlayers = 2;
+    public int maxPlayers;
     public GameData gameData;
     public CardInfo cardInfo;
 
@@ -44,9 +44,14 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
             SendRPCToMaster();
     }
 
+    public void DeactivateWaitingUI()
+    {
+        waitingUI.SetActive(false);
+    }
+    
     private void SendRPCToMaster()
     {
-        FindObjectOfType<PhotonView>().RPC("RegisterPlayer", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.NickName);
+        FindObjectOfType<PhotonView>().RPC("RegisterPlayer", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName);
         if (PhotonNetwork.PlayerList.Length >= maxPlayers)
             waitingUI.SetActive(false);
     }

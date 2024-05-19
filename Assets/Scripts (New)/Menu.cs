@@ -26,6 +26,7 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	void Start () { //start function
 		vers.text = "Version: " + Application.version;
+		playerName = "PLAYER" + Random.Range(0, 20000);
 
 		foreach (GameObject x in cards) { //sets a random color and number for the cards
 			string randColor = returnRandColor (Random.Range(0,4));

@@ -137,7 +137,7 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 		return handList.Count;
 	}
 
-	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control)
+	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skip = false)
 	{
 		
 	}

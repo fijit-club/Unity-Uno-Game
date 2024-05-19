@@ -16,14 +16,22 @@ public class ClientHandler : MonoBehaviour
     [PunRPC]
     private void RegisterPlayer(string playerName)
     {
-        Player player = new Player();
-        player.playerName = playerName;
-        _gameNet.gameData.players.Add(player);
-        
-        PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Player player = new Player();
+            player.playerName = playerName;
+            _gameNet.gameData.players.Add(player);
+
+            PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+        }
 
         if (PhotonNetwork.PlayerList.Length >= _gameNet.maxPlayers)
-            _gameNet.StartGame();
+        {
+            if (PhotonNetwork.IsMasterClient)
+                _gameNet.StartGame();
+            else
+                _gameNet.DeactivateWaitingUI();
+        }
     }
 
     [PunRPC]

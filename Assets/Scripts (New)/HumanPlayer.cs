@@ -160,13 +160,26 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		}
 	}
 
-	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control)
+	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skip = false)
 	{
 		var currentTurnIndex = gameNet.gameData.currentTurnIndex;
-		if (currentTurnIndex < PhotonNetwork.PlayerList.Length - 1)
+		if (!skip)
+			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
+		else
+			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 2);
+
+		gameNet.gameData.currentTurn = gameNet.gameData.players[currentTurnIndex].playerName;
+		print(gameNet.gameData.discardedCardIndices.Last());
+		turn();
+		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNet.GetJSONGameData());
+	}
+
+	private static int UpdateCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
+	{
+		if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
 		{
-			currentTurnIndex++;
-			gameNet.gameData.currentTurnIndex++;
+			currentTurnIndex += amount;
+			gameNet.gameData.currentTurnIndex += amount;
 		}
 		else
 		{
@@ -174,10 +187,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			gameNet.gameData.currentTurnIndex = 0;
 		}
 
-		gameNet.gameData.currentTurn = gameNet.gameData.players[currentTurnIndex].playerName;
-		print(gameNet.gameData.discardedCardIndices.Last());
-		turn();
-		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNet.GetJSONGameData());
+		return currentTurnIndex;
 	}
 
 	public void addCards(Card other) { //recieves cards to add to the hand
@@ -221,8 +231,9 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardRegular", RpcTarget.Others, cardIndex);
 				}
-				else if (specNumb == 10) {
-					cont.specialCardPlay (this, 10);
+				else if (specNumb == 10)
+				{
+					NextPlayersTurn(_gameNet, cont, true);
 					cont.recieveText (string.Format ("{0} played a {1} skip", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "skip",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
