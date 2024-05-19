@@ -160,14 +160,16 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		}
 	}
 
-	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skip = false)
+	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skipTurn = false, bool reverse = false)
 	{
 		var currentTurnIndex = gameNet.gameData.currentTurnIndex;
-		if (!skip)
+		if (!skipTurn)
 			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
-		else
+		else if (skipTurn)
 			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 2);
 
+		print(currentTurnIndex);
+		print(gameNet.gameData.players[currentTurnIndex].playerName);
 		gameNet.gameData.currentTurn = gameNet.gameData.players[currentTurnIndex].playerName;
 		print(gameNet.gameData.discardedCardIndices.Last());
 		turn();
@@ -176,15 +178,31 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 	private static int UpdateCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
 	{
-		if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
+		if (amount > 0)
 		{
-			currentTurnIndex += amount;
-			gameNet.gameData.currentTurnIndex += amount;
+			if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
+			{
+				currentTurnIndex += amount;
+				gameNet.gameData.currentTurnIndex += amount;
+			}
+			else
+			{
+				currentTurnIndex = 0;
+				gameNet.gameData.currentTurnIndex = 0;
+			}
 		}
-		else
+		else if (amount < 0)
 		{
-			currentTurnIndex = 0;
-			gameNet.gameData.currentTurnIndex = 0;
+			if (currentTurnIndex > 0)
+			{
+				currentTurnIndex -= 1;
+				gameNet.gameData.currentTurnIndex -= 1;
+			}
+			else
+			{
+				currentTurnIndex = 0;
+				gameNet.gameData.currentTurnIndex = PhotonNetwork.PlayerList.Length - 1;
+			}
 		}
 
 		return currentTurnIndex;
@@ -216,11 +234,18 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		else {	
 			int specNumb = _gameNet.cardInfo.mainDeck[cardIndex].cardNumber;	
 			if (playedWild) {
-				cont.updateDiscPile (cardIndex);
-				handList.RemoveAt (handIndex);	
-				cont.startWild (name, cardIndex, specNumb);
-				// if (specNumb == 14)
-				// 	cont.specialCardPlay (this, 14);
+				cont.updateDiscPile(cardIndex);
+				handList.RemoveAt(handIndex);
+
+				if (specNumb == 13)
+				{
+					cont.startWild(name, cardIndex, specNumb);
+				}
+
+				if (specNumb == 14)
+				{
+					cont.startWild(name, cardIndex, specNumb);
+				}
 			}
 			else {
 				if (specNumb < 10)
@@ -239,14 +264,15 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 				}
 				else if (specNumb == 11) {
-					cont.specialCardPlay (this, 11);
-					cont.recieveText (string.Format ("{0} played a {1} reverse", name, handList [cardIndex].getColor ()));
+					_gameNet.gameData.players.Reverse();
+					NextPlayersTurn(_gameNet, cont, reverse: true);
+					cont.recieveText (string.Format ("{0} played a {1} reverse", name, _gameNet.cardInfo.mainDeck [cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "reverse",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 				}
 				else if (specNumb == 12) {
 					cont.specialCardPlay (this, 12);
-					cont.recieveText (string.Format ("{0} played a {1} draw 2", name, handList [cardIndex].getColor ()));
+					cont.recieveText (string.Format ("{0} played a {1} draw 2", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 				}

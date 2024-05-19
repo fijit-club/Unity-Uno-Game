@@ -37,4 +37,5 @@ public class GameData
     public string currentTurn;
     public int currentTurnIndex;
     public List<int> discardedCardIndices;
+    public bool reversed;
 }

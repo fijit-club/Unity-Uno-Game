@@ -61,6 +61,19 @@ public class ClientHandler : MonoBehaviour
             card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
             _control.wildColor = cardColor;
         }
+        else if (string.Equals(cardName, "draw4"))
+        {
+            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
+            _control.wildColor = cardColor;
+            foreach (var player in _gameNet.gameData.players)
+            {
+                if (string.Equals(player.playerName, _gameNet.gameData.currentTurn))
+                {
+                    print(player.playerName);
+                    _control.draw(4);
+                }
+            }
+        }
         else
             card = null;
         _control.updateDiscPile(cardIndex);

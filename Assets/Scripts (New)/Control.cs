@@ -310,7 +310,6 @@ public class Control : MonoBehaviour
 		colors [i].GetComponent<Button> ().onClick.AddListener (() => {
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
-			recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 		
 			Destroy(discardPileObj);
 			Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
@@ -322,9 +321,19 @@ public class Control : MonoBehaviour
 			}
 			colorText.SetActive (false);
 			this.enabled=true;
-			FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "color",
-				wildColor, cardIndex);
-		
+			if (specNumb == 13)
+			{
+				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "color",
+					wildColor, cardIndex);
+				recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
+			}
+			else if (specNumb == 14)
+			{
+				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw4",
+					wildColor, cardIndex);
+				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
+			}
+
 			players[0].NextPlayersTurn(gameNetworkHandler, this);
 			FindObjectOfType<Control>().players[0].turn();
 		});
