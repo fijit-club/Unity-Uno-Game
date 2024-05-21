@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using FijitAddons;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -23,10 +24,25 @@ public class Menu : MonoBehaviourPunCallbacks
 	public GameObject wildCardPrefab;
 	public GameObject setupCan;
 	public GameObject[] toggles = new GameObject[5];
+	public bool testing;
 
+	public void SetNetworkData()
+	{
+		if (testing)
+			playerName = "PLAYER" + Random.Range(0, 20000);
+		else
+		{
+			playerName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.username;
+			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbyId;
+		}
+	}
+	
 	void Start () { //start function
 		vers.text = "Version: " + Application.version;
-		playerName = "PLAYER" + Random.Range(0, 20000);
+		if (testing)
+			playerName = "PLAYER" + Random.Range(0, 20000);
+		else
+			playerName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.username;
 
 		foreach (GameObject x in cards) { //sets a random color and number for the cards
 			string randColor = returnRandColor (Random.Range(0,4));
@@ -108,6 +124,8 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	private void CreateRoom()
 	{
+		if (!testing)
+			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbyId;
 		PhotonNetwork.JoinRoom(roomName);
 	}
 
