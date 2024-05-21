@@ -7,7 +7,7 @@ class Builder{
     {
 
         // Place all your scenes here
-        string[] scenes = {"Assets/Tetris Template/Scenes/GamePlay.unity"};
+        string[] scenes = {"Assets/Scenes/Start.unity"};
 
         string[] args = Environment.GetCommandLineArgs();
         string outputPath = "builds/raw/web"; // Set a default path if the argument is not provided
