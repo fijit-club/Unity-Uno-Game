@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using TMPro;
 
 public class Card : MonoBehaviour {
 
@@ -37,16 +38,28 @@ public class Card : MonoBehaviour {
 			foreach (Transform childs in temp.transform) {
 				if (childs.name.Equals ("Cover"))
 					break;
-				childs.GetComponent<Text> ().text = number.ToString ();
+				print(childs.gameObject.name);
+				childs.GetComponent<TMP_Text> ().text = number.ToString ();
 			}
-			temp.transform.GetChild (1).GetComponent<Text> ().color = returnColor (color);
+			temp.transform.GetChild (1).GetComponent<TMP_Text> ().color = returnColor (color);
 		}
-		else if (number == 10 || number == 11 || number==12) {
+		else if (number == 10 || number == 11) {
 			temp.transform.GetChild (1).GetComponent<RawImage> ().color = returnColor (color);
 		}
+		else if (number == 12)
+		{
+			temp.transform.GetChild(1).GetComponent<RawImage>().texture = Resources.Load(color + "Draw") as Texture2D;
+		}
 		else if (number == 13) {
-			temp.transform.GetChild (0).GetComponent<Text> ().text = "";
-			temp.transform.GetChild (2).GetComponent<Text> ().text = "";
+			temp.transform.GetChild (0).GetComponent<TMP_Text> ().text = "";
+			temp.transform.GetChild(1).GetChild(0).gameObject.SetActive(true);
+			temp.transform.GetChild(1).GetChild(1).gameObject.SetActive(false);
+			temp.transform.GetChild (2).GetComponent<TMP_Text> ().text = "";
+		}
+		else if (number == 14)
+		{
+			temp.transform.GetChild(1).GetChild(0).gameObject.SetActive(false);
+			temp.transform.GetChild(1).GetChild(1).gameObject.SetActive(true);
 		}
 
 		temp.GetComponent<RawImage> ().texture = Resources.Load (color + "Card") as Texture2D;

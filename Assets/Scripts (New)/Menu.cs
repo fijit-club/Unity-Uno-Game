@@ -78,9 +78,9 @@ public class Menu : MonoBehaviourPunCallbacks
 					break;
 				}
 			}
-			GameObject temp = myCard.loadCard (720, pos, GameObject.Find("Canvas").transform);
-			scroll2.Add (temp);
-			pos -= 300;
+//			GameObject temp = myCard.loadCard (720, pos, GameObject.Find("Canvas").transform);
+//			scroll2.Add (temp);
+//			pos -= 300;
 		}
 	}
 	string returnRandColor (int rand) { //gives a random color
@@ -156,38 +156,38 @@ public class Menu : MonoBehaviourPunCallbacks
 		UnityEngine.SceneManagement.SceneManager.LoadScene ("Main"); //then it loads the play screen
 	}
 	void Update() { //this takes care of moving all of the cards in the scroll. It resets them back to the top as well
-		for(int i=0;i<6;i++) {
-			float curPos = scroll2[i].transform.localPosition.y;
-			if (curPos < (Screen.height-300)*-1) {
-				Destroy (scroll2[i]);
-				Card myCard=null;
-				int randNumb = Random.Range (0, 15);
-				if (randNumb < 10)
-					myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), regCardPrefab);
-				else {
-					switch (randNumb) {
-					case 10:
-						myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), skipCardPrefab);
-						break;
-					case 11:
-						myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), revrsCardPrefab);
-						break;
-					case 12:
-						myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), drawCardPrefab);
-						break;
-					case 13:
-						myCard = new Card (randNumb, "Black", wildCardPrefab);
-						break;
-					case 14:
-						myCard = new Card (randNumb, "Black", wildCardPrefab);
-						break;
-					}
-				}
-				GameObject temp = myCard.loadCard (720, (int)(curPos+1800), GameObject.Find("Canvas").transform);
-				scroll2[i]=temp;
-			}
-			else 
-				scroll2[i].transform.localPosition = new Vector2 (scroll2[i].transform.localPosition.x, curPos - 100 * Time.deltaTime);
-		}
+		// for(int i=0;i<6;i++) {
+		// 	float curPos = scroll2[i].transform.localPosition.y;
+		// 	if (curPos < (Screen.height-300)*-1) {
+		// 		Destroy (scroll2[i]);
+		// 		Card myCard=null;
+		// 		int randNumb = Random.Range (0, 15);
+		// 		if (randNumb < 10)
+		// 			myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), regCardPrefab);
+		// 		else {
+		// 			switch (randNumb) {
+		// 			case 10:
+		// 				myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), skipCardPrefab);
+		// 				break;
+		// 			case 11:
+		// 				myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), revrsCardPrefab);
+		// 				break;
+		// 			case 12:
+		// 				myCard = new Card (randNumb, returnRandColor (Random.Range (0, 4)), drawCardPrefab);
+		// 				break;
+		// 			case 13:
+		// 				myCard = new Card (randNumb, "Black", wildCardPrefab);
+		// 				break;
+		// 			case 14:
+		// 				myCard = new Card (randNumb, "Black", wildCardPrefab);
+		// 				break;
+		// 			}
+		// 		}
+		// 		GameObject temp = myCard.loadCard (720, (int)(curPos+1800), GameObject.Find("Canvas").transform);
+		// 		scroll2[i]=temp;
+		// 	}
+		// 	else 
+		// 		scroll2[i].transform.localPosition = new Vector2 (scroll2[i].transform.localPosition.x, curPos - 100 * Time.deltaTime);
+		// }
 	}
 }
