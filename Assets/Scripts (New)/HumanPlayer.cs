@@ -84,7 +84,20 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		// 		temp = handCard.loadCard(GameObject.Find("Control").GetComponent<Control>().playerHand.transform);
 		// 	i++;
 		// }
-		
+
+		if (thisPlayer != null && thisPlayer.playerCardIndices.Count != handList.Count)
+		{
+			handList.Clear();
+			foreach (var handCard in handList)
+				Destroy(handCard.gameObject);
+			
+			foreach (int playerCard in thisPlayer.playerCardIndices)
+			{
+				var cardData = _gameNet.cardInfo.mainDeck[playerCard];
+				Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+				handList.Add(card);
+			}
+		}	
 		
 		foreach (int playerCardIndex in thisPlayer.playerCardIndices)
 		{
@@ -153,6 +166,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					player.playerCardIndices.RemoveAt(handIndex);
 				}
 			}
+
+			PhotonNetwork.CurrentRoom.SetCustomProperties(gameNet.GetJSONGameData());
 			
 			temp.GetComponent<Button>().onClick.RemoveAllListeners();
 			Destroy(temp);
@@ -235,7 +250,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			int specNumb = _gameNet.cardInfo.mainDeck[cardIndex].cardNumber;	
 			if (playedWild) {
 				cont.updateDiscPile(cardIndex);
-				handList.RemoveAt(handIndex);
+				if (handIndex > handList.Count)
+					handList.RemoveAt(handIndex);
 
 				if (specNumb == 13)
 				{
@@ -271,13 +287,28 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 				}
 				else if (specNumb == 12) {
-					cont.specialCardPlay (this, 12);
+					//cont.specialCardPlay (this, 12);
 					cont.recieveText (string.Format ("{0} played a {1} draw 2", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
-					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw",
-						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+
+					int playerIndex = _gameNet.gameData.currentTurnIndex;
+
+					if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+						playerIndex++;
+					else
+						playerIndex = 0;
+					
+					for (int j = 0; j < 2; j++)
+					{
+						_gameNet.gameData.players[playerIndex].playerCardIndices
+							.Add(_gameNet.gameData.cardIndices[0]);
+						_gameNet.gameData.cardIndices.RemoveAt(0);
+
+						FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw",
+							_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+					}
 				}
 				cont.updateDiscPile (cardIndex);
-				handList.RemoveAt(handIndex);
+				//handList.RemoveAt(handIndex);
 				
 				NextPlayersTurn(_gameNet, cont);
 			}

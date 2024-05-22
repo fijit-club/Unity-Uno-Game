@@ -193,10 +193,10 @@ public class Control : MonoBehaviour
 		for (int i = 0; i < 7; i++)
 		{
 			gameNetworkHandler.gameData.players[0].playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
-			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
-			Card playerCard = new Card(cardData.cardNumber,
-				cardData.color, cardData.cardPrefab);
-			players[0].addCards(playerCard);
+			//var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
+			//Card playerCard = new Card(cardData.cardNumber,
+			//	cardData.color, cardData.cardPrefab);
+			//players[0].addCards(playerCard);
 			
 			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		}
@@ -238,10 +238,10 @@ public class Control : MonoBehaviour
 					{
 						_assignedCards = true;
 
-						var cardDataPlayer = gameNetworkHandler.cardInfo.mainDeck[playerCardIndex];
-						Card card = new Card(cardDataPlayer.cardNumber, cardDataPlayer.color,
-							cardDataPlayer.cardPrefab);
-						players[0].addCards(card);
+						// var cardDataPlayer = gameNetworkHandler.cardInfo.mainDeck[playerCardIndex];
+						// Card card = new Card(cardDataPlayer.cardNumber, cardDataPlayer.color,
+						// 	cardDataPlayer.cardPrefab);
+						//players[0].addCards(card);
 					}
 				}
 			}
@@ -331,11 +331,41 @@ public class Control : MonoBehaviour
 			{
 				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw4",
 					wildColor, cardIndex);
+
+				int playerIndex = gameNetworkHandler.gameData.currentTurnIndex;
+
+				if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+					playerIndex++;
+				else
+					playerIndex = 0;
+
+				for (int j = 0; j < 4; j++)
+				{
+					gameNetworkHandler.gameData.players[playerIndex].playerCardIndices
+						.Add(gameNetworkHandler.gameData.cardIndices[0]);
+					gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
+				}
+
+				updateDiscPile(cardIndex);
+				
 				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 			}
 
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				print(player.playerCardIndices.Count);
+			}
 			players[0].NextPlayersTurn(gameNetworkHandler, this);
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				print(player.playerCardIndices.Count);
+			}
 			FindObjectOfType<Control>().players[0].turn();
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				print(player.playerCardIndices.Count);
+			}
+
 		});
 	}
 
@@ -355,9 +385,9 @@ public class Control : MonoBehaviour
 			resetDeck ();
 		}
 		for (int i = 0; i < amount; i++) {
-			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
-			Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
-			players[0].addCards (card);
+			// var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
+			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			//players[0].addCards (card);
 			foreach (var player in gameNetworkHandler.gameData.players)
 			{
 				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))

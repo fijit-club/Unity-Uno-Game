@@ -26,6 +26,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
 
     private void UpdateTurns()
     {
+        control.players[0].turn();
         if (gameData.currentTurn == PhotonNetwork.LocalPlayer.NickName)
             control.myTurn = true;
     }
