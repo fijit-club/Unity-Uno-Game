@@ -45,7 +45,7 @@ public class Control : MonoBehaviour
 	int where=0;
 	float timer=0;
 	bool reverse=false;
-	private bool _assignedCards;
+	public bool assignedCards;
 
 	public static int numbOfAI;
 	[SerializeField] private TMP_Text currentTurnPlayerText;
@@ -164,7 +164,7 @@ public class Control : MonoBehaviour
 		if (!PhotonNetwork.IsMasterClient) return;
 		gameNetworkHandler.gameData.currentTurn = PhotonNetwork.LocalPlayer.NickName;
 		myTurn = true;
-		_assignedCards = true;
+		assignedCards = true;
 		Card first = null;
 		if (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber < 10)
 		{
@@ -215,15 +215,21 @@ public class Control : MonoBehaviour
 			}
 		}
 
-		players [0].turn ();
+		print("ASSIGNED CARDS");
+		// players [0].turn ();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
+	}
+
+	public void PlayCard(PlayCardData playCardData)
+	{
+		players[0].PlayTurn(playCardData);
 	}
 
 	public void AssignCardsOnClients()
 	{
 		currentTurnPlayerText.text = gameNetworkHandler.gameData.currentTurn + "'s turn.";
 
-		if (_assignedCards || PhotonNetwork.IsMasterClient) return;
+		if (assignedCards || PhotonNetwork.IsMasterClient) return;
 
 		print(gameNetworkHandler.cardInfo.mainDeck.Count);
 		print(gameNetworkHandler.gameData.discardedCardIndices.Count);
@@ -231,8 +237,8 @@ public class Control : MonoBehaviour
 		{
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices[0]];
 			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
-			first.transform.position = discardedPileLocation.position;
-			first.loadCard(0, 0, GameObject.Find("Main").transform);
+			var tempCard = first.loadCard(0, 0, GameObject.Find("Main").transform);
+			tempCard.transform.position = discardedPileLocation.position;
 
 			for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 			{
@@ -241,7 +247,7 @@ public class Control : MonoBehaviour
 				{
 					foreach (int playerCardIndex in player.playerCardIndices)
 					{
-						_assignedCards = true;
+						assignedCards = true;
 
 						// var cardDataPlayer = gameNetworkHandler.cardInfo.mainDeck[playerCardIndex];
 						// Card card = new Card(cardDataPlayer.cardNumber, cardDataPlayer.color,

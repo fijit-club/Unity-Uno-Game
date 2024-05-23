@@ -14,4 +14,6 @@ public interface PlayerInterface { //the interface the is inherited by the playe
 	bool Equals(PlayerInterface other);
 	int getCardsLeft();
 	void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skipTurn = false, bool reverse = false);
+
+	public void PlayTurn(PlayCardData playCardData);
 }

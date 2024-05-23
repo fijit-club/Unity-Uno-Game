@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 
-public class AiPlayer : MonoBehaviour, PlayerInterface {
+public class AiPlayer : MonoBehaviour {
 
 	bool skip=false;
 	bool drew =false;
@@ -94,35 +94,35 @@ public class AiPlayer : MonoBehaviour, PlayerInterface {
 			return;
 		}
 		else {
-			int specNumb = handList [locationCardPlayed].getNumb ();
-			if (specNumb < 10) {
-				cont.recieveText (string.Format ("{0} played a {1} {2}", name, handList [locationCardPlayed].getColor (), handList [locationCardPlayed].getNumb ()));
-				cont.enabled = true;
-				//cont.updateCardsLeft ();
-			}
-			else if (specNumb == 10) {
-				cont.specialCardPlay (this, 10);
-				cont.recieveText (string.Format ("{0} played a {1} skip", name, handList [locationCardPlayed].getColor ()));
-			}
-			else if (specNumb == 11) {
-				cont.specialCardPlay (this, 11);
-				cont.recieveText (string.Format ("{0} played a {1} reverse", name, handList [locationCardPlayed].getColor ()));
-			}
-			else if (specNumb == 12) {
-				cont.specialCardPlay (this, 12);
-				cont.recieveText (string.Format ("{0} played a {1} draw 2", name, handList [locationCardPlayed].getColor ()));
-			}
-			else if (specNumb == 13) {
-				cont.enabled = true;
-				cont.recieveText (string.Format ("{0} played a wild card, Color: {1}", name, colorToPlay));
-				handList [locationCardPlayed].changeColor (colorToPlay);
-			}
-			else if (specNumb == 14) {
-				cont.specialCardPlay (this, 14);
-				cont.recieveText (string.Format ("{0} played a wild draw 4, Color: {1}", name, colorToPlay));
-				handList [locationCardPlayed].changeColor (colorToPlay);
-				cont.enabled = true;
-			}
+			// int specNumb = handList [locationCardPlayed].getNumb ();
+			// if (specNumb < 10) {
+			// 	cont.recieveText (string.Format ("{0} played a {1} {2}", name, handList [locationCardPlayed].getColor (), handList [locationCardPlayed].getNumb ()));
+			// 	cont.enabled = true;
+			// 	//cont.updateCardsLeft ();
+			// }
+			// else if (specNumb == 10) {
+			// 	cont.specialCardPlay (this, 10);
+			// 	cont.recieveText (string.Format ("{0} played a {1} skip", name, handList [locationCardPlayed].getColor ()));
+			// }
+			// else if (specNumb == 11) {
+			// 	cont.specialCardPlay (this, 11);
+			// 	cont.recieveText (string.Format ("{0} played a {1} reverse", name, handList [locationCardPlayed].getColor ()));
+			// }
+			// else if (specNumb == 12) {
+			// 	cont.specialCardPlay (this, 12);
+			// 	cont.recieveText (string.Format ("{0} played a {1} draw 2", name, handList [locationCardPlayed].getColor ()));
+			// }
+			// else if (specNumb == 13) {
+			// 	cont.enabled = true;
+			// 	cont.recieveText (string.Format ("{0} played a wild card, Color: {1}", name, colorToPlay));
+			// 	handList [locationCardPlayed].changeColor (colorToPlay);
+			// }
+			// else if (specNumb == 14) {
+			// 	cont.specialCardPlay (this, 14);
+			// 	cont.recieveText (string.Format ("{0} played a wild draw 4, Color: {1}", name, colorToPlay));
+			// 	handList [locationCardPlayed].changeColor (colorToPlay);
+			// 	cont.enabled = true;
+			// }
 		}
 		//cont.updateDiscPile(handList[locationCardPlayed]);
 		handList.RemoveAt (locationCardPlayed);

@@ -40,9 +40,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		foreach (var player in _gameNet.gameData.players)
 		{
 			if (player.playerName == PhotonNetwork.LocalPlayer.NickName)
-			{
 				thisPlayer = player;
-			}
 		}
 
 		// GameObject temp = null;
@@ -86,29 +84,41 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		// 	i++;
 		// }
 
-		if (thisPlayer != null)
+		// if (thisPlayer != null)
+		// {
+		// 	handList.Clear();
+		// 	foreach (var handCard in handList)
+		// 		Destroy(handCard.gameObject);
+		// 	
+		// 	foreach (int playerCard in thisPlayer.playerCardIndices)
+		// 	{
+		// 		var cardData = _gameNet.cardInfo.mainDeck[playerCard];
+		// 		Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+		// 		handList.Add(card);
+		// 	}
+		// }
+
+		var control = GameObject.FindObjectOfType<Control>();
+		var playerHand = control.playerHand;
+
+		for (int j = playerHand.transform.childCount - 1; j >= 0; j--)
 		{
-			handList.Clear();
-			foreach (var handCard in handList)
-				Destroy(handCard.gameObject);
-			
-			foreach (int playerCard in thisPlayer.playerCardIndices)
-			{
-				var cardData = _gameNet.cardInfo.mainDeck[playerCard];
-				Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
-				handList.Add(card);
-			}
-		}	
-		
+			Destroy(playerHand.transform.GetChild(j).gameObject);
+		}
+		print("TURN");
 		foreach (int playerCardIndex in thisPlayer.playerCardIndices)
 		{
-			if (GameObject.Find("Control").GetComponent<Control>().playerHand.transform.childCount >
-			    i) //is the card already there or does it need to be loaded
-				temp = GameObject.Find("Control").GetComponent<Control>().playerHand.transform.GetChild(i).gameObject;
-			else
-				temp = handList[i].loadCard(GameObject.Find("Control").GetComponent<Control>().playerHand.transform);
-			
+			// temp = handList[i].loadCard(GameObject.Find("Control").GetComponent<Control>().playerHand.transform);
 			var card = _gameNet.cardInfo.mainDeck[playerCardIndex];
+			Card cardObject = new Card(card.cardNumber, card.color, card.cardPrefab);
+			var currentCard = cardObject.loadCard(playerHand.transform);
+
+			var playCardData = currentCard.GetComponent<PlayCardData>();
+			playCardData.cardIndex = playerCardIndex;
+			playCardData.handIndex = i;
+			playCardData.cardObject = currentCard;
+			
+			SetListeners(currentCard);
 			var topCardInDiscardDeck = _gameNet.cardInfo.mainDeck[_gameNet.gameData.discardedCardIndices.Last()];
 
 			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
@@ -116,13 +126,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			if (card.cardNumber == topCardInDiscardDeck.cardNumber ||
 			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 || string.Equals(card.color, FindObjectOfType<Control>().wildColor))
 			{
-				print("CAN BE PRESSED: " + i);
-				setListeners(playerCardIndex, temp, i);
-				temp.transform.GetChild (3).gameObject.SetActive (false);
+				//setListeners(playerCardIndex, temp, i);
+				currentCard.transform.GetChild (3).gameObject.SetActive (false);
 			}
 			else
 			{
-				temp.transform.GetChild (3).gameObject.SetActive (true);
+				currentCard.transform.GetChild (3).gameObject.SetActive (true);
 			}
 			i++;
 		}
@@ -147,11 +156,37 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		// 	i++;
 		// }
 	}
-	public void setListeners(int cardIndex,GameObject temp, int handIndex) { //sets all listeners on the cards
-		temp.GetComponent<Button>().onClick.AddListener(() => { PlayTurn(cardIndex, temp, handIndex); });
+	public void SetListeners(GameObject temp) { //sets all listeners on the cards
+		temp.GetComponent<Button>().onClick.AddListener(() => { PlayTurn(temp.GetComponent<PlayCardData>());});
 	}
 
-	private void PlayTurn(int cardIndex, GameObject temp, int handIndex)
+	public void PlayTurn(PlayCardData playCardData)
+	{
+		foreach (var player in _gameNet.gameData.players)
+		{
+			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			{
+				
+				var control = FindObjectOfType<Control>();
+				if (_gameNet.gameData.currentTurn != PhotonNetwork.LocalPlayer.NickName)
+				{
+					control.myTurn = false;
+					return;
+				}
+
+				if (control.myTurn)
+				{
+					player.playerCardIndices.RemoveAt(playCardData.handIndex);
+					control.myTurn = false;
+					playedWild = _gameNet.cardInfo.mainDeck[playCardData.cardIndex].cardNumber >= 13;
+					PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+					turnEnd(playCardData.cardIndex, playCardData.handIndex, playCardData.cardObject);
+				}
+			}
+		}
+	}
+	
+	public void PlayTurn(int cardIndex, GameObject temp, int handIndex)
 	{
 		var control = FindObjectOfType<Control>();
 		if (_gameNet.gameData.currentTurn != PhotonNetwork.LocalPlayer.NickName)
@@ -317,7 +352,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					}
 				}
 
-				handList.RemoveAt(handIndex);
+				//handList.RemoveAt(handIndex);
 				cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 
 				NextPlayersTurn(_gameNet, cont);

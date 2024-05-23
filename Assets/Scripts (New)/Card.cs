@@ -38,7 +38,6 @@ public class Card : MonoBehaviour {
 			foreach (Transform childs in temp.transform) {
 				if (childs.name.Equals ("Cover"))
 					break;
-				print(childs.gameObject.name);
 				childs.GetComponent<TMP_Text> ().text = number.ToString ();
 			}
 			temp.transform.GetChild (1).GetComponent<TMP_Text> ().color = returnColor (color);

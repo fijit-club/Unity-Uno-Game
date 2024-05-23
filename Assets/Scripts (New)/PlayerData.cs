@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 [Serializable]
 public class Player
@@ -15,18 +14,6 @@ public class Player
 public class CardInfo
 {
     public List<CardData> mainDeck = new List<CardData>();
-}
-
-[Serializable]
-public class CardData
-{
-    public int cardNumber;
-    public string color;
-    public bool wild;
-    public bool reverse;
-    public bool draw;
-    public bool skip;
-    public GameObject cardPrefab;
 }
 
 [Serializable]
