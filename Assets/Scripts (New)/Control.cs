@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using DG.Tweening;
 using Photon.Pun;
 using TMPro;
 using Random = UnityEngine.Random;
@@ -38,6 +39,8 @@ public class Control : MonoBehaviour
 	public GameObject pauseCan;
 	public GameObject endCan;
 	bool enabledStat=false;
+
+	[SerializeField] private Transform discardedPileLocation;
 
 	int where=0;
 	float timer=0;
@@ -188,6 +191,7 @@ public class Control : MonoBehaviour
 
 		//gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
+		discardPileObj.transform.position = discardedPileLocation.position;
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
 		for (int i = 0; i < 7; i++)
@@ -227,6 +231,7 @@ public class Control : MonoBehaviour
 		{
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices[0]];
 			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			first.transform.position = discardedPileLocation.position;
 			first.loadCard(0, 0, GameObject.Find("Main").transform);
 
 			for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
@@ -271,16 +276,20 @@ public class Control : MonoBehaviour
 			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text);
 	}
 
-	public void updateDiscPile(int cardIndex) { //this changes the last card played. Top of the discard pile
+	public GameObject updateDiscPile(int cardIndex, float x = 0, float y = 0) { //this changes the last card played. Top of the discard pile
 		gameNetworkHandler.gameData.discardedCardIndices.Add (cardIndex);
-		Destroy(discardPileObj);
+		//Destroy(discardPileObj);
 
 		var cardData = gameNetworkHandler.cardInfo.mainDeck[cardIndex];
 		Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 		
-		discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
+		discardPileObj=card.loadCard ((int) x, (int) y, GameObject.Find ("Main").transform);
+		discardPileObj.transform.position = new Vector3(x, y);
 		players[0].turn();
+		discardPileObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f);
+		discardPileObj.transform.DORotate(new Vector3(0f, 0f, Random.Range(-30f, 30f)), .1f);
 		//discardPileObj.transform.SetSiblingIndex(9);
+		return discardPileObj;
 	}
 	public bool updateCardsLeft() { //this updates the number below each ai, so the player knows how many cards they have left
 		for (int i = 0; i < players.Count - 1; i++) {

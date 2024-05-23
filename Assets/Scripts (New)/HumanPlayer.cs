@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.UI;
@@ -85,7 +86,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		// 	i++;
 		// }
 
-		if (thisPlayer != null && thisPlayer.playerCardIndices.Count != handList.Count)
+		if (thisPlayer != null)
 		{
 			handList.Clear();
 			foreach (var handCard in handList)
@@ -153,6 +154,11 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	private void PlayTurn(int cardIndex, GameObject temp, int handIndex)
 	{
 		var control = FindObjectOfType<Control>();
+		if (_gameNet.gameData.currentTurn != PhotonNetwork.LocalPlayer.NickName)
+		{
+			control.myTurn = false;
+			return;
+		}
 		if (control.myTurn)
 		{
 			var gameNet = FindObjectOfType<GameNetworkHandler>();
@@ -170,8 +176,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			PhotonNetwork.CurrentRoom.SetCustomProperties(gameNet.GetJSONGameData());
 			
 			temp.GetComponent<Button>().onClick.RemoveAllListeners();
-			Destroy(temp);
-			turnEnd(cardIndex, handIndex);
+			turnEnd(cardIndex, handIndex, temp);
 		}
 	}
 
@@ -229,11 +234,13 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	public void recieveDrawOnTurn() { //if the player decides to draw
 		handList[handList.Count-1].loadCard (GameObject.Find ("Control").GetComponent<Control> ().playerHand.transform);
 		drew = true;
-		turnEnd (-1, -1);
+		// turnEnd (-1, -1);
 	}
 
-	public void turnEnd(int cardIndex, int handIndex) { //ends the player's turn
+	public void turnEnd(int cardIndex, int handIndex, GameObject tempCard) { //ends the player's turn
 		Control cont = GameObject.Find("Control").GetComponent<Control>();
+
+		GameObject playedCard = tempCard;
 
 		cont.playerHand.GetComponent<RectTransform>().localPosition = new Vector2(0, 0);
 
@@ -249,9 +256,11 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		else {	
 			int specNumb = _gameNet.cardInfo.mainDeck[cardIndex].cardNumber;	
 			if (playedWild) {
-				cont.updateDiscPile(cardIndex);
+				cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 				if (handIndex > handList.Count)
+				{
 					handList.RemoveAt(handIndex);
+				}
 
 				if (specNumb == 13)
 				{
@@ -307,13 +316,18 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 							_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 					}
 				}
-				cont.updateDiscPile (cardIndex);
-				//handList.RemoveAt(handIndex);
-				
+
+				handList.RemoveAt(handIndex);
+				cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
+
 				NextPlayersTurn(_gameNet, cont);
 			}
+
+			Destroy(tempCard);
+			// handList[handIndex].transform.DOMove(discardedTop.transform.position, 3f).OnComplete();
 		}
 	}
+
 	public bool Equals(PlayerInterface other) { //equals function based on name
 		return other.getName ().Equals (name);
 	}
