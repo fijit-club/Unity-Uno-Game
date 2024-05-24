@@ -326,9 +326,9 @@ public class Control : MonoBehaviour
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
 		
-			Destroy(discardPileObj);
-			Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
-			discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
+			//Destroy(discardPileObj);
+			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			//discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
 			 
 			foreach (GameObject x in colors) {
 				x.SetActive (false);
@@ -341,6 +341,7 @@ public class Control : MonoBehaviour
 				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "color",
 					wildColor, cardIndex);
 				recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
+				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
 			}
 			else if (specNumb == 14)
 			{
@@ -361,7 +362,7 @@ public class Control : MonoBehaviour
 					gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 				}
 
-				updateDiscPile(cardIndex);
+				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
 				
 				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 			}
@@ -384,12 +385,15 @@ public class Control : MonoBehaviour
 		});
 	}
 
+	[SerializeField] private Animator deckAnim;
+	
 	public void PlayerDraw()
 	{
 		if (myTurn)
 		{
+			deckAnim.Play("DeckPick", -1, 0f);
 			myTurn = false;
-			recieveText ($"{PhotonNetwork.LocalPlayer.NickName} drew a card");
+			recieveText ("draw");
 			players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
 			draw(1);
 		}

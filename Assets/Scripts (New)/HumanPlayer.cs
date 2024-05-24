@@ -124,13 +124,16 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
 			//print(card.cardNumber + " " + string.Equals(card.color, topCardInDiscardDeck.color));
 			if (card.cardNumber == topCardInDiscardDeck.cardNumber ||
-			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 || string.Equals(card.color, FindObjectOfType<Control>().wildColor))
+			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 ||
+			    string.Equals(card.color, FindObjectOfType<Control>().wildColor))
 			{
 				//setListeners(playerCardIndex, temp, i);
 				currentCard.transform.GetChild (3).gameObject.SetActive (false);
+				currentCard.GetComponent<Button>().interactable = true;
 			}
 			else
 			{
+				currentCard.GetComponent<Button>().interactable = false;
 				currentCard.transform.GetChild (3).gameObject.SetActive (true);
 			}
 			i++;
@@ -166,7 +169,6 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		{
 			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
 			{
-				
 				var control = FindObjectOfType<Control>();
 				if (_gameNet.gameData.currentTurn != PhotonNetwork.LocalPlayer.NickName)
 				{
@@ -182,6 +184,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
 					turnEnd(playCardData.cardIndex, playCardData.handIndex, playCardData.cardObject);
 				}
+				break;
 			}
 		}
 	}
@@ -292,10 +295,10 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			int specNumb = _gameNet.cardInfo.mainDeck[cardIndex].cardNumber;	
 			if (playedWild) {
 				cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
-				if (handIndex > handList.Count)
-				{
-					handList.RemoveAt(handIndex);
-				}
+				// if (handIndex > handList.Count)
+				// {
+				// 	handList.RemoveAt(handIndex);
+				// }
 
 				if (specNumb == 13)
 				{
@@ -315,20 +318,24 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					cont.enabled = true;
 
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardRegular", RpcTarget.Others, cardIndex);
+					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
+					NextPlayersTurn(_gameNet, cont);
 				}
 				else if (specNumb == 10)
 				{
-					NextPlayersTurn(_gameNet, cont, true);
 					cont.recieveText (string.Format ("{0} played a {1} skip", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "skip",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
+					NextPlayersTurn(_gameNet, cont, true);
 				}
 				else if (specNumb == 11) {
 					_gameNet.gameData.players.Reverse();
-					NextPlayersTurn(_gameNet, cont, reverse: true);
 					cont.recieveText (string.Format ("{0} played a {1} reverse", name, _gameNet.cardInfo.mainDeck [cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "reverse",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
+					NextPlayersTurn(_gameNet, cont, reverse: true);
 				}
 				else if (specNumb == 12) {
 					//cont.specialCardPlay (this, 12);
@@ -349,13 +356,14 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 						FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw",
 							_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+						cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 					}
+					NextPlayersTurn(_gameNet, cont);
 				}
 
 				//handList.RemoveAt(handIndex);
-				cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 
-				NextPlayersTurn(_gameNet, cont);
+				//NextPlayersTurn(_gameNet, cont);
 			}
 
 			Destroy(tempCard);

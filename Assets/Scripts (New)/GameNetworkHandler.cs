@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Newtonsoft.Json;
 using Photon.Pun;
@@ -9,19 +10,27 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public int maxPlayers;
     public GameData gameData;
     public CardInfo cardInfo;
-
+    public bool gameStarted;
+    
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
+    [SerializeField] private GameObject[] otherPlayers;
+    [SerializeField] private GameObject otherCardPrefab;
+    [SerializeField] private Animator drawOther;
     
+    private bool _assignedPlayerLocation;
+
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
         print(PhotonNetwork.CurrentRoom.CustomProperties);
-        
-        GameData tempGameData = JsonConvert.DeserializeObject<GameData>((string) PhotonNetwork.CurrentRoom.CustomProperties["GAME"]);
+
+        GameData tempGameData =
+            JsonConvert.DeserializeObject<GameData>((string) PhotonNetwork.CurrentRoom.CustomProperties["GAME"]);
         gameData = tempGameData;
-        
+
         control.AssignCardsOnClients();
         UpdateTurns();
+        UpdateOtherPlayerSet(false);
     }
 
     private void UpdateTurns()
@@ -36,6 +45,41 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     {
         control.AssignCards();
         waitingUI.SetActive(false);
+    }
+
+    private int _assigned;
+    
+    public void UpdateOtherPlayerSet(bool assignLocation)
+    {
+        ResetCards();
+    }
+
+    private void ResetCards()
+    {
+        for (int j = 0; j < otherPlayers.Length; j++)
+        {
+            for (int i = otherPlayers[j].transform.childCount - 1; i >= 0; i--)
+            {
+                Destroy(otherPlayers[j].transform.GetChild(i).gameObject);
+            }
+        }
+
+        int n = 0;
+        foreach (var player in gameData.players)
+        {
+            if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName)) continue;
+            for (int i = 0; i < player.playerCardIndices.Count; i++)
+            {
+                Instantiate(otherCardPrefab, otherPlayers[n].transform);
+            }
+
+            n++;
+        }
+    }
+
+    public void DrawAnimationOther()
+    {
+        drawOther.Play("draw other", -1, 0f);
     }
 
     private void Start()

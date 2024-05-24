@@ -31,6 +31,7 @@ public class ClientHandler : MonoBehaviour
                 _gameNet.StartGame();
             else
                 _gameNet.DeactivateWaitingUI();
+
         }
     }
 
@@ -38,12 +39,15 @@ public class ClientHandler : MonoBehaviour
     private void SendGameLog(string text)
     {
         _control.recieveText(text, false);
+        if (string.Equals(text, "draw"))
+            _gameNet.DrawAnimationOther();
     }
 
     [PunRPC]
     private void UpdateDiscardRegular(int cardNumber)
     {
-        _control.updateDiscPile(cardNumber);
+        var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
+        _control.updateDiscPile(cardNumber, otherCardLocation.position.x, otherCardLocation.position.y);
     }
 
     [PunRPC]
@@ -76,6 +80,7 @@ public class ClientHandler : MonoBehaviour
         }
         else
             card = null;
-        _control.updateDiscPile(cardIndex);
+        var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
+        _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
     }
 }
