@@ -23,7 +23,8 @@ public class Control : MonoBehaviour
 	public Text dialogueText;
 	public string wildColor;
 	public Transform tempHand;
-	
+	public Animator skipAnimation;
+	public Animator reverseAnimation;
 	public static GameObject discardPileObj;
 
 	public GameObject regCardPrefab;
@@ -52,8 +53,8 @@ public class Control : MonoBehaviour
 	public static int numbOfAI;
 	[SerializeField] private TMP_Text currentTurnPlayerText;
 	
-	void Start () { //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
-
+	void Start () 
+	{ //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
 		players.Add(new HumanPlayer(PhotonNetwork.LocalPlayer.NickName));
 		// for (int i = 0; i < numbOfAI; i++)
 		// {
@@ -295,11 +296,11 @@ public class Control : MonoBehaviour
 		return "";
 	}
 	
-	public void recieveText(string text, bool sendToOthers = true) { //updates the dialogue box
+	public void recieveText(string text, bool sendToOthers = true, string affectedPlayer = "") { //updates the dialogue box
 		dialogueText.text += text + "\n";
 		contentHolder.GetComponent<RectTransform> ().localPosition = new Vector2 (0, contentHolder.GetComponent<RectTransform> ().sizeDelta.y);
 		if (sendToOthers)
-			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text);
+			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text, affectedPlayer);
 	}
 
 	public GameObject updateDiscPile(int cardIndex, float x = 0, float y = 0) { //this changes the last card played. Top of the discard pile
@@ -365,15 +366,11 @@ public class Control : MonoBehaviour
 			}
 			else if (specNumb == 14)
 			{
+				int playerIndex = GetNextPlayerIndex();
+
 				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw4",
 					wildColor, cardIndex);
-
-				int playerIndex = gameNetworkHandler.gameData.currentTurnIndex;
-
-				if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
-					playerIndex++;
-				else
-					playerIndex = 0;
+				recieveText("draw", affectedPlayer: gameNetworkHandler.gameData.players[playerIndex].playerName);
 
 				for (int j = 0; j < 4; j++)
 				{
@@ -403,6 +400,27 @@ public class Control : MonoBehaviour
 			}
 
 		});
+	}
+
+	private int GetNextPlayerIndex()
+	{
+		int playerIndex = gameNetworkHandler.gameData.currentTurnIndex;
+		if (gameNetworkHandler.gameData.reversed)
+		{
+			if (playerIndex > 0)
+				playerIndex--;
+			else
+				playerIndex = PhotonNetwork.PlayerList.Length - 1;
+		}
+		else
+		{
+			if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+				playerIndex++;
+			else
+				playerIndex = 0;
+		}
+
+		return playerIndex;
 	}
 
 	[SerializeField] private Animator deckAnim;

@@ -1,8 +1,12 @@
 using System;
 using System.Collections;
+using FijitAddons;
 using Newtonsoft.Json;
 using Photon.Pun;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameNetworkHandler : MonoBehaviourPunCallbacks
@@ -15,10 +19,39 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
     [SerializeField] private GameObject[] otherPlayers;
+    [SerializeField] private Image[] otherPlayersProfileImages;
+    [SerializeField] private TMP_Text[] otherPlayersUsernameTexts;
+    [SerializeField] private Image thisPlayerProfileImage;
+    [SerializeField] private TMP_Text thisPlayerName;
+    
     [SerializeField] private GameObject otherCardPrefab;
     [SerializeField] private Animator drawOther;
     
     private bool _assignedPlayerLocation;
+    private int _imagesDownloaded;
+    private bool _downloadedAllImages;
+    
+    IEnumerator DownloadImage(string MediaUrl, Image profilePic, bool thisPlayer = false)
+    {   
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(MediaUrl);
+        yield return request.SendWebRequest();
+        if (request.isNetworkError || request.isHttpError)
+        {
+            Debug.Log(request.error);
+        }
+        else
+        {
+            var tex = ((DownloadHandlerTexture) request.downloadHandler).texture;
+            Sprite profileSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0, 0));
+            profilePic.sprite = profileSprite;
+            if (!thisPlayer)
+            {
+                _imagesDownloaded++;
+                if (_imagesDownloaded == maxPlayers)
+                    _downloadedAllImages = true;
+            }
+        }
+    }
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
@@ -65,15 +98,25 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         }
 
         int n = 0;
-        foreach (var player in gameData.players)
+        if (maxPlayers == 2)
+            n = 1;
+        for (int j = 0; j < gameData.players.Count; j++)
         {
+            var player = gameData.players[j];
             if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName)) continue;
+            otherPlayersUsernameTexts[n].text = player.playerName;
+            if (!_downloadedAllImages)
+            {
+                otherPlayersProfileImages[n].transform.parent.parent.gameObject.SetActive(true);
+                StartCoroutine(DownloadImage(player.avatar, otherPlayersProfileImages[n]));
+            }
             for (int i = 0; i < player.playerCardIndices.Count; i++)
             {
                 Instantiate(otherCardPrefab, otherPlayers[n].transform);
             }
 
-            n++;
+            if (maxPlayers > 2)
+                n++;
         }
     }
 
@@ -88,6 +131,11 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
             AddMasterPlayer();
         else
             SendRPCToMaster();
+
+        StartCoroutine(DownloadImage(Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar,
+            thisPlayerProfileImage, true));
+        print(PhotonNetwork.LocalPlayer.NickName);
+        thisPlayerName.text = PhotonNetwork.LocalPlayer.NickName;
     }
 
     public void DeactivateWaitingUI()
@@ -97,7 +145,8 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     
     private void SendRPCToMaster()
     {
-        FindObjectOfType<PhotonView>().RPC("RegisterPlayer", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName);
+        FindObjectOfType<PhotonView>().RPC("RegisterPlayer", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName,
+            Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar);
         if (PhotonNetwork.PlayerList.Length >= maxPlayers)
             waitingUI.SetActive(false);
     }
@@ -106,6 +155,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     {
         Player player = new Player();
         player.playerName = PhotonNetwork.LocalPlayer.NickName;
+        player.avatar = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar;
         gameData.players.Add(player);
         PhotonNetwork.CurrentRoom.SetCustomProperties(GetJSONGameData());
     }

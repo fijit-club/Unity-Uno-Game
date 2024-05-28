@@ -262,23 +262,33 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	public void NextPlayersTurn(GameNetworkHandler gameNet, Control control, bool skipTurn = false, bool reverse = false)
 	{
 		var currentTurnIndex = gameNet.gameData.currentTurnIndex;
-		if (!skipTurn)
-			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
-		else if (skipTurn)
+		if (gameNet.gameData.reversed)
 		{
-			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
-			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
+			if (!skipTurn)
+				currentTurnIndex = BackCurrentIndex(gameNet, currentTurnIndex, 1);
+			else if (skipTurn)
+			{
+				currentTurnIndex = BackCurrentIndex(gameNet, currentTurnIndex, 1);
+				currentTurnIndex = BackCurrentIndex(gameNet, currentTurnIndex, 1);
+			}
+		}
+		else
+		{
+			if (!skipTurn)
+				currentTurnIndex = ForwardCurrentIndex(gameNet, currentTurnIndex, 1);
+			else if (skipTurn)
+			{
+				currentTurnIndex = ForwardCurrentIndex(gameNet, currentTurnIndex, 1);
+				currentTurnIndex = ForwardCurrentIndex(gameNet, currentTurnIndex, 1);
+			}
 		}
 
-		print(currentTurnIndex);
-		print(gameNet.gameData.players[currentTurnIndex].playerName);
 		gameNet.gameData.currentTurn = gameNet.gameData.players[currentTurnIndex].playerName;
-		print(gameNet.gameData.discardedCardIndices.Last());
 		turn();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNet.GetJSONGameData());
 	}
 
-	private static int UpdateCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
+	private static int ForwardCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
 	{
 		if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
 		{
@@ -294,6 +304,22 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		return currentTurnIndex;
 	}
 
+	private static int BackCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
+	{
+		if (currentTurnIndex > 0)
+		{
+			currentTurnIndex -= amount;
+			gameNet.gameData.currentTurnIndex -= amount;
+		}
+		else
+		{
+			currentTurnIndex = PhotonNetwork.PlayerList.Length - amount;
+			gameNet.gameData.currentTurnIndex = PhotonNetwork.PlayerList.Length - amount;
+		}
+
+		return currentTurnIndex;
+	}
+	
 	public void addCards(Card other) { //recieves cards to add to the hand
 		handList.Add (other);
 	}
@@ -352,22 +378,44 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				else if (specNumb == 10)
 				{
 					cont.recieveText (string.Format ("{0} played a {1} skip", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
+
+
+					int playerIndex = _gameNet.gameData.currentTurnIndex;
+					if (_gameNet.gameData.reversed)
+					{
+						if (playerIndex > 0)
+							playerIndex--;
+						else
+							playerIndex = PhotonNetwork.PlayerList.Length - 1;
+					}
+					else
+					{
+						if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+							playerIndex++;
+						else
+							playerIndex = 0;
+					}
+
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "skip",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+					
+				 	cont.recieveText("skip", affectedPlayer: _gameNet.gameData.players[playerIndex].playerName);
 					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 					NextPlayersTurn(_gameNet, cont, true);
 				}
 				else if (specNumb == 11) {
-					_gameNet.gameData.players.Reverse();
+					// _gameNet.gameData.players.Reverse();
+					cont.reverseAnimation.Play("popup", -1, 0f);
 					cont.recieveText (string.Format ("{0} played a {1} reverse", name, _gameNet.cardInfo.mainDeck [cardIndex].color));
 					FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "reverse",
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
+					_gameNet.gameData.reversed = !_gameNet.gameData.reversed;
 					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
-					NextPlayersTurn(_gameNet, cont, reverse: true);
+					if (PhotonNetwork.PlayerList.Length > 2)
+						NextPlayersTurn(_gameNet, cont, reverse: true);
 				}
 				else if (specNumb == 12) {
 					//cont.specialCardPlay (this, 12);
-					cont.recieveText (string.Format ("{0} played a {1} draw 2", name, _gameNet.cardInfo.mainDeck[cardIndex].color));
 
 					int playerIndex = _gameNet.gameData.currentTurnIndex;
 
@@ -375,6 +423,9 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 						playerIndex++;
 					else
 						playerIndex = 0;
+					cont.recieveText(
+						string.Format("{0} played a {1} draw 2", name, _gameNet.cardInfo.mainDeck[cardIndex].color),
+						affectedPlayer: _gameNet.gameData.players[playerIndex].playerName);
 					
 					for (int j = 0; j < 2; j++)
 					{

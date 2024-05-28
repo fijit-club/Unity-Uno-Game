@@ -14,12 +14,13 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
-    private void RegisterPlayer(string playerName)
+    private void RegisterPlayer(string playerName, string avatar)
     {
         if (PhotonNetwork.IsMasterClient)
         {
             Player player = new Player();
             player.playerName = playerName;
+            player.avatar = avatar;
             _gameNet.gameData.players.Add(player);
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
@@ -36,16 +37,27 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
-    private void SendGameLog(string text)
+    private void SendGameLog(string text, string affectedPlayer)
     {
         _control.recieveText(text, false);
-        if (string.Equals(text, "draw"))
+        if (string.Equals(text, "draw") || text.Contains("drew") || text.Contains("draw"))
+        {
             _gameNet.DrawAnimationOther();
+            
+        }
+        if (string.Equals(affectedPlayer, PhotonNetwork.LocalPlayer.NickName))
+        {
+            if (text.Contains("skip"))
+                _control.skipAnimation.Play("popup", -1, 0f);
+        }
+        if (text.Contains("reverse"))
+            _control.reverseAnimation.Play("popup", -1, 0f);
     }
 
     [PunRPC]
     private void UpdateDiscardRegular(int cardNumber)
     {
+        _control.wildColor = null;
         var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
         _control.updateDiscPile(cardNumber, otherCardLocation.position.x, otherCardLocation.position.y);
     }
@@ -53,6 +65,7 @@ public class ClientHandler : MonoBehaviour
     [PunRPC]
     private void UpdateDiscardSpecial(int cardNumber, string cardName, string cardColor, int cardIndex)
     {
+        _control.wildColor = null;
         Card card;
         if (string.Equals(cardName, "reverse"))
             card = new Card(cardNumber, cardColor, _control.reverseCardPrefab);
