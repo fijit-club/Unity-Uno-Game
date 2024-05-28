@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using Photon.Pun;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +20,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	private GameNetworkHandler _gameNet;
 	private List<CardData> playerCards = new List<CardData>();
 	private int _test;
+	private bool _cardsDealt;
 
 	public HumanPlayer(string name) { //initalizes
 		this.name = name;
@@ -29,7 +31,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		set{ skip = value; }
 	}
 
-	public void turn() { //does the turn
+	public void turn(bool fromUpdate = false) { //does the turn
 		playedWild = false;
 		drew = false;
 		//int i = 0;
@@ -105,6 +107,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		{
 			Destroy(playerHand.transform.GetChild(j).gameObject);
 		}
+		print("TEST");
+
 		print("TURN");
 		foreach (int playerCardIndex in thisPlayer.playerCardIndices)
 		{
@@ -112,6 +116,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			var card = _gameNet.cardInfo.mainDeck[playerCardIndex];
 			Card cardObject = new Card(card.cardNumber, card.color, card.cardPrefab);
 			var currentCard = cardObject.loadCard(playerHand.transform);
+			CardDealAnimation(currentCard, control, i, fromUpdate);
 
 			var playCardData = currentCard.GetComponent<PlayCardData>();
 			playCardData.cardIndex = playerCardIndex;
@@ -123,9 +128,10 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
 			//print(card.cardNumber + " " + string.Equals(card.color, topCardInDiscardDeck.color));
-			if (card.cardNumber == topCardInDiscardDeck.cardNumber ||
+			if ((card.cardNumber == topCardInDiscardDeck.cardNumber ||
 			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 ||
-			    string.Equals(card.color, FindObjectOfType<Control>().wildColor))
+			    string.Equals(card.color, FindObjectOfType<Control>().wildColor)) && string.Equals(
+				    _gameNet.gameData.currentTurn, PhotonNetwork.LocalPlayer.NickName))
 			{
 				//setListeners(playerCardIndex, temp, i);
 				currentCard.transform.GetChild (3).gameObject.SetActive (false);
@@ -159,6 +165,41 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		// 	i++;
 		// }
 	}
+
+	private void CardDealAnimation(GameObject currentCard, Control control, int i, bool fromUpdate = false)
+	{
+		int cardsDestroyed = 0;
+		if (_cardsDealt) return;
+		Canvas.ForceUpdateCanvases();
+		var tempPlayerCard = Instantiate(currentCard, control.tempHand, true);
+		tempPlayerCard.transform.position = control.deckLocation.position;
+		tempPlayerCard.transform.DOLocalMove(currentCard.transform.localPosition, .1f * i).OnComplete(() =>
+		{
+			currentCard.GetComponent<RawImage>().enabled = true;
+			for (int j = 0; j < currentCard.transform.childCount - 1; j++)
+			{
+				currentCard.transform.GetChild(j).gameObject.SetActive(true);
+			}
+			Destroy(tempPlayerCard);
+			print("destroyed card");
+			cardsDestroyed++;
+			print(cardsDestroyed);
+			if (cardsDestroyed >= 7)
+			{
+				for (int j = control.tempHand.childCount - 1; j > 0; j--)
+				{
+					Destroy(control.tempHand.GetChild(i).gameObject);
+				}
+			}
+			_cardsDealt = true;
+		});
+		currentCard.GetComponent<RawImage>().enabled = false;
+		for (int j = 0; j < currentCard.transform.childCount - 1; j++)
+		{
+			currentCard.transform.GetChild(j).gameObject.SetActive(false);
+		}
+	}
+
 	public void SetListeners(GameObject temp) { //sets all listeners on the cards
 		temp.GetComponent<Button>().onClick.AddListener(() => { PlayTurn(temp.GetComponent<PlayCardData>());});
 	}

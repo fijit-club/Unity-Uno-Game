@@ -22,7 +22,8 @@ public class Control : MonoBehaviour
 	public GameObject contentHolder;
 	public Text dialogueText;
 	public string wildColor;
-
+	public Transform tempHand;
+	
 	public static GameObject discardPileObj;
 
 	public GameObject regCardPrefab;
@@ -41,6 +42,7 @@ public class Control : MonoBehaviour
 	bool enabledStat=false;
 
 	[SerializeField] private Transform discardedPileLocation;
+	[SerializeField] public Transform deckLocation;
 
 	int where=0;
 	float timer=0;
@@ -191,6 +193,10 @@ public class Control : MonoBehaviour
 
 		//gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
+		var tempDiscardObj = Instantiate(discardPileObj, discardPileObj.transform.parent, true);
+		tempDiscardObj.transform.localPosition = deckLocation.localPosition;
+		tempDiscardObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f).OnComplete(MoveComplete);
+		discardPileObj.SetActive(false);
 		discardPileObj.transform.position = discardedPileLocation.position;
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
@@ -201,7 +207,7 @@ public class Control : MonoBehaviour
 			//Card playerCard = new Card(cardData.cardNumber,
 			//	cardData.color, cardData.cardPrefab);
 			//players[0].addCards(playerCard);
-			
+
 			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		}
 
@@ -218,6 +224,11 @@ public class Control : MonoBehaviour
 		print("ASSIGNED CARDS");
 		// players [0].turn ();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
+	}
+
+	private void MoveComplete()
+	{
+		discardPileObj.SetActive(true);
 	}
 
 	public void PlayCard(PlayCardData playCardData)
@@ -239,6 +250,15 @@ public class Control : MonoBehaviour
 			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 			var tempCard = first.loadCard(0, 0, GameObject.Find("Main").transform);
 			tempCard.transform.position = discardedPileLocation.position;
+			
+			var tempDiscardObj = Instantiate(tempCard, tempCard.transform.parent, true);
+			tempDiscardObj.transform.localPosition = deckLocation.localPosition;
+			tempDiscardObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f).OnComplete(() =>
+			{
+				tempCard.SetActive(true);
+				Destroy(tempDiscardObj);
+			});
+			tempCard.SetActive(false);
 
 			for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 			{
@@ -258,7 +278,7 @@ public class Control : MonoBehaviour
 			}
 		}
 
-		players[0].turn();
+		// players[0].turn();
 	}
 
 	string returnColorName (int numb) { //returns a color based on a number, used in setup
