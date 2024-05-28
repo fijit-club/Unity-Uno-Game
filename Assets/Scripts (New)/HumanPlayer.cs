@@ -224,7 +224,10 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		if (!skipTurn)
 			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
 		else if (skipTurn)
-			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 2);
+		{
+			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
+			currentTurnIndex = UpdateCurrentIndex(gameNet, currentTurnIndex, 1);
+		}
 
 		print(currentTurnIndex);
 		print(gameNet.gameData.players[currentTurnIndex].playerName);
@@ -236,31 +239,15 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 	private static int UpdateCurrentIndex(GameNetworkHandler gameNet, int currentTurnIndex, int amount)
 	{
-		if (amount > 0)
+		if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
 		{
-			if (currentTurnIndex < PhotonNetwork.PlayerList.Length - amount)
-			{
-				currentTurnIndex += amount;
-				gameNet.gameData.currentTurnIndex += amount;
-			}
-			else
-			{
-				currentTurnIndex = 0;
-				gameNet.gameData.currentTurnIndex = 0;
-			}
+			currentTurnIndex += amount;
+			gameNet.gameData.currentTurnIndex += amount;
 		}
-		else if (amount < 0)
+		else
 		{
-			if (currentTurnIndex > 0)
-			{
-				currentTurnIndex -= 1;
-				gameNet.gameData.currentTurnIndex -= 1;
-			}
-			else
-			{
-				currentTurnIndex = 0;
-				gameNet.gameData.currentTurnIndex = PhotonNetwork.PlayerList.Length - 1;
-			}
+			currentTurnIndex = 0;
+			gameNet.gameData.currentTurnIndex = 0;
 		}
 
 		return currentTurnIndex;
