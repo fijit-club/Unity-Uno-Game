@@ -203,7 +203,7 @@ public class Control : MonoBehaviour
 		discardPileObj.transform.position = discardedPileLocation.position;
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < 3; i++)
 		{
 			gameNetworkHandler.gameData.players[0].playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 			//var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
@@ -217,14 +217,13 @@ public class Control : MonoBehaviour
 		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 		{
 			var player = gameNetworkHandler.gameData.players[i];
-			for (int j = 0; j < 7; j++)
+			for (int j = 0; j < 3; j++)
 			{
 				player.playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 				gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 			}
 		}
 
-		print("ASSIGNED CARDS");
 		// players [0].turn ();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
 	}
@@ -444,14 +443,29 @@ public class Control : MonoBehaviour
 	
 	public void PlayerDraw()
 	{
-		if (myTurn)
+		bool won = false;
+
+		foreach (var player in gameNetworkHandler.gameData.players)
 		{
-			deckAnim.Play("DeckPick", -1, 0f);
-			myTurn = false;
-			recieveText ("draw");
-			players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
-			draw(1);
+			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			{
+				won = player.won;
+				if (!won)
+				{
+					if (string.Equals(gameNetworkHandler.gameData.currentTurn, player.playerName))
+					{
+						deckAnim.Play("DeckPick", -1, 0f);
+						myTurn = false;
+						recieveText("draw");
+						players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
+						draw(1);
+					}
+
+				}
+			}
 		}
+
+		
 	}
 	
 	public void draw(int amount) { //gives cards to the players. Players can ask to draw or draw will actrivate from special cards

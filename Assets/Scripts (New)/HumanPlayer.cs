@@ -31,6 +31,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		set{ skip = value; }
 	}
 
+	private bool _funoCannotBeEnabled;
+
 	public void turn(bool fromUpdate = false) { //does the turn
 		playedWild = false;
 		drew = false;
@@ -131,6 +133,21 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					thisLocalPlayer = player;
 			}
 
+			if (thisLocalPlayer != null && (thisLocalPlayer.playerCardIndices.Count > 1 || thisLocalPlayer.playerCardIndices.Count == 0)) _funoCannotBeEnabled = false;
+
+			if (!_funoCannotBeEnabled)
+			{
+				if (thisLocalPlayer != null && thisLocalPlayer.playerCardIndices.Count == 1)
+				{
+					_gameNet.funOButton.SetActive(true);
+					_funoCannotBeEnabled = true;
+				}
+				else
+				{
+					_gameNet.funOButton.SetActive(false);
+				}
+			}
+
 			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
 			//print(card.cardNumber + " " + string.Equals(card.color, topCardInDiscardDeck.color));
 			if ((card.cardNumber == topCardInDiscardDeck.cardNumber ||
@@ -140,35 +157,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			{
 				//setListeners(playerCardIndex, temp, i);
 				currentCard.transform.GetChild (3).gameObject.SetActive (false);
-				if (thisLocalPlayer.playerCardIndices.Count > 1)
-				{
-					currentCard.GetComponent<Button>().interactable = true;
-					_gameNet.funOButton.SetActive(false);
-				}
-				else
-				{
-					_gameNet.funOButton.SetActive(true);
-					currentCard.GetComponent<Button>().interactable = false;
-					_gameNet.funOButton.GetComponent<Button>().onClick.AddListener(() =>
-					{
-						thisLocalPlayer.won = true;
-						if (currentCard != null)
-							PlayTurn(currentCard.GetComponent<PlayCardData>());
-						else
-						{
-							currentCard = GameObject.Find("Hand").transform.GetChild(0).GetChild(0).GetChild(0).gameObject;
-							PlayTurn(currentCard.GetComponent<PlayCardData>());
-						}
-						_gameNet.funOButton.SetActive(false);
-						_gameNet.GameEnd();
-					});
-				}
+				currentCard.GetComponent<Button>().interactable = true;
 			}
 			else
 			{
 				currentCard.GetComponent<Button>().interactable = false;
 				currentCard.transform.GetChild (3).gameObject.SetActive (true);
-				_gameNet.funOButton.SetActive(false);
 			}
 			i++;
 		}
@@ -209,9 +203,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				currentCard.transform.GetChild(j).gameObject.SetActive(true);
 			}
 			Destroy(tempPlayerCard);
-			print("destroyed card");
 			cardsDestroyed++;
-			print(cardsDestroyed);
 			if (cardsDestroyed >= 7)
 			{
 				for (int j = control.tempHand.childCount - 1; j > 0; j--)
@@ -249,8 +241,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				if (control.myTurn)
 				{
 					player.playerCardIndices.RemoveAt(playCardData.handIndex);
+					
 					control.myTurn = false;
+					_gameNet.thisPlayerTurnIndicator.SetActive(false);
 					playedWild = _gameNet.cardInfo.mainDeck[playCardData.cardIndex].cardNumber >= 13;
+					if (player.playerCardIndices.Count == 0)
+						_gameNet.GameEnd();
 					PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
 					turnEnd(playCardData.cardIndex, playCardData.handIndex, playCardData.cardObject);
 				}
@@ -482,7 +478,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 						_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 					_gameNet.gameData.reversed = !_gameNet.gameData.reversed;
 					cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
-					if (PhotonNetwork.PlayerList.Length > 2)
+					if (_gameNet.activePlayers > 2)
 						NextPlayersTurn(_gameNet, cont, reverse: true);
 				}
 				else if (specNumb == 12) {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using FijitAddons;
 using Newtonsoft.Json;
 using Photon.Pun;
@@ -12,11 +13,15 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 public class GameNetworkHandler : MonoBehaviourPunCallbacks
 {
     public int maxPlayers;
+    public int activePlayers;
     public GameData gameData;
     public CardInfo cardInfo;
     public int scoreForLeaderboard;
     public GameObject thisPlayerTurnIndicator;
-
+    public bool pressedFunoButton;
+    public OtherPlayer[] otherPlayersHandler;
+    public bool won;
+    
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
     [SerializeField] private GameObject[] otherPlayers;
@@ -30,12 +35,36 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private Animator drawOther;
     [SerializeField] private GameObject thisPlayerCrown;
     [SerializeField] private GameObject[] otherTurnIndicators;
+    [SerializeField] private GameObject[] otherCatchButtons;
 
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;
     private bool _downloadedAllImages;
     private bool _scoreSent;
+    private bool _catch;
+    
+    private void Awake()
+    {
+        maxPlayers = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbySize;
+    }
 
+    public void FunoButtonPress()
+    {
+        pressedFunoButton = true;
+
+        int thisPlayerIndex = 0;
+
+        for (int i = 0; i < gameData.players.Count; i++)
+        {
+            var player = gameData.players[i];
+            if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+                thisPlayerIndex = i;
+        }
+
+        FindObjectOfType<PhotonView>().RPC("SayFuno", RpcTarget.Others, thisPlayerIndex);
+        funOButton.SetActive(false);
+    }
+    
     public void GameEnd()
     {
         for (int i = control.playerHand.transform.childCount - 1; i > 0; i--)
@@ -49,7 +78,10 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
             if (player.won)
                 playersWon++;
             if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+            {
                 player.won = true;
+                won = true;
+            }
         }
 
         if (playersWon > 0)
@@ -110,8 +142,20 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         UpdateOtherPlayerSet(false);
 
         SendScore();
+        
+        CheckActivePlayers();
     }
 
+    private void CheckActivePlayers()
+    {
+        activePlayers = 0;
+        foreach (var player in gameData.players)
+        {
+            if (!player.won)
+                activePlayers++;
+        }
+    }
+    
     private void UpdateTurns()
     {
         if (control.assignedCards)
@@ -120,6 +164,10 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         {
             control.myTurn = true;
             thisPlayerTurnIndicator.SetActive(true);
+        }
+        else
+        {
+            thisPlayerTurnIndicator.SetActive(false);
         }
     }
 
@@ -193,6 +241,31 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         }
     }
 
+    public void UpdateCatchButtonPlayers(int playerIndex)
+    {
+        for (int i = 0; i < gameData.players.Count; i++)
+        {
+            if (string.Equals(gameData.players[i].playerName, PhotonNetwork.LocalPlayer.NickName))
+            {
+                UpdateCatchButton(playerIndex, i);
+            }
+        }
+    }
+    
+    private void UpdateCatchButton(int playerIndex, int playerScreen)
+    {
+        if (maxPlayers == 2)
+            otherCatchButtons[1].SetActive(false);
+        else if (maxPlayers == 3)
+        {
+            CatchButtonSetupFor3Players(playerIndex, playerScreen);
+        }
+        else if (maxPlayers == 4)
+        {
+            CatchButtonSetupFor4Players(playerIndex, playerScreen);
+        }
+    }
+
     private void SetupFor4Players(int playerScreen)
     {
         if (string.Equals(gameData.players[playerScreen].playerName, PhotonNetwork.LocalPlayer.NickName))
@@ -224,6 +297,73 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         }
     }
 
+    private void CatchButtonSetupFor4Players(int playerIndex, int playerScreen)
+    {
+        if (playerScreen == 0)
+        {
+            if (playerIndex == 1)
+                otherCatchButtons[0].SetActive(false);
+            else if (playerIndex == 2)
+                otherCatchButtons[1].SetActive(false);
+            else if (playerIndex == 3)
+                otherCatchButtons[2].SetActive(false);
+        }
+        else if (playerScreen == 1)
+        {
+            if (playerIndex == 0)
+                otherCatchButtons[2].SetActive(false);
+            else if (playerIndex == 2)
+                otherCatchButtons[0].SetActive(false);
+            else if (playerIndex == 3)
+                otherCatchButtons[1].SetActive(false);
+        }
+        else if (playerScreen == 2)
+        {
+            if (playerIndex == 0)
+                otherCatchButtons[1].SetActive(false);
+            else if (playerIndex == 1)
+                otherCatchButtons[2].SetActive(false);
+            else if (playerIndex == 3)
+                otherCatchButtons[0].SetActive(false);
+        }
+        else if (playerScreen == 3)
+        {
+            if (playerIndex == 0)
+                otherCatchButtons[0].SetActive(false);
+            else if (playerIndex == 1)
+                otherCatchButtons[1].SetActive(false);
+            else if (playerIndex == 2)
+                otherCatchButtons[2].SetActive(false);
+        }
+    }
+
+    private void CatchButtonSetupFor3Players(int playerIndex, int playerScreen)
+    {
+        if (playerScreen == 0)
+        {
+            if (playerIndex == 1)
+                otherCatchButtons[0].SetActive(false);
+            else if (playerIndex == 2)
+                otherCatchButtons[2].SetActive(false);
+        }
+        else if (playerScreen == 1)
+        {
+            if (playerIndex == 0)
+                otherCatchButtons[2].SetActive(false);
+            else if (playerIndex == 2)
+                otherCatchButtons[0].SetActive(false);
+        }
+        else if (playerScreen == 2)
+        {
+            if (playerIndex == 0)
+                otherCatchButtons[0].SetActive(false);
+            else if (playerIndex == 1)
+                otherCatchButtons[2].SetActive(false);
+        }
+    }
+
+    private List<int> playersWith1Left = new List<int>();
+
     private void SetupPlayer(int playerIndex, int place)
     {
         otherPlayersUsernameTexts[place].text = gameData.players[playerIndex].playerName;
@@ -239,12 +379,47 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         else
             crowns[place].SetActive(false);
 
+        _catch = false;
+
+        if (gameData.players[playerIndex].playerCardIndices.Count > 1 && playersWith1Left.Contains(playerIndex))
+        {
+            otherCatchButtons[place].SetActive(false);
+            playersWith1Left.Remove(playerIndex);
+        }
+        
+        if (gameData.players[playerIndex].playerCardIndices.Count == 0)
+            otherCatchButtons[place].SetActive(false);
+        
+        
+        if (gameData.players[playerIndex].playerCardIndices.Count == 1)
+        {
+            if (!playersWith1Left.Contains(playerIndex) && !won)
+            {
+                otherCatchButtons[place].SetActive(true);
+                playersWith1Left.Add(playerIndex);
+            }
+            otherCatchButtons[place].GetComponent<Button>().onClick.AddListener(() =>
+            {
+                if (!_catch)
+                {
+                    otherCatchButtons[place].SetActive(false);
+                    CatchButton(playerIndex);
+                    _catch = true;
+                }
+            });
+        }
+
         if (playerIndex == gameData.currentTurnIndex)
             otherTurnIndicators[place].SetActive(true);
         else
             otherTurnIndicators[place].SetActive(false);
     }
 
+    public void CatchButton(int playerIndex)
+    {
+        FindObjectOfType<PhotonView>().RPC("Catch", RpcTarget.Others, playerIndex);
+    }
+    
     public void DrawAnimationOther()
     {
         drawOther.Play("draw other", -1, 0f);

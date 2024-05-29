@@ -112,4 +112,31 @@ public class ClientHandler : MonoBehaviour
                 topCard.GetComponent<RawImage>().texture = _control.colorTextures[3];
         }
     }
+
+    [PunRPC]
+    private void SayFuno(int playerIndex)
+    {
+        _gameNet.otherPlayersHandler[playerIndex].saidFUNO = true;
+        _gameNet.UpdateCatchButtonPlayers(playerIndex);
+    }
+
+    [PunRPC]
+    private void Catch(int playerIndex)
+    {
+        _gameNet.UpdateCatchButtonPlayers(playerIndex);
+        for (int i = 0; i < _gameNet.gameData.players.Count; i++)
+        {
+            if (i == playerIndex && string.Equals(_gameNet.gameData.players[i].playerName,
+                    PhotonNetwork.LocalPlayer.NickName))
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    _gameNet.gameData.players[playerIndex].playerCardIndices.Add(_gameNet.gameData.cardIndices[0]);
+                    _gameNet.gameData.cardIndices.RemoveAt(0);
+                }
+
+                PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+            }
+        }
+    }
 }
