@@ -44,7 +44,8 @@ public class Control : MonoBehaviour
 
 	[SerializeField] private Transform discardedPileLocation;
 	[SerializeField] public Transform deckLocation;
-
+	public Texture[] colorTextures;
+	
 	int where=0;
 	float timer=0;
 	bool reverse=false;
@@ -167,6 +168,7 @@ public class Control : MonoBehaviour
 		if (!PhotonNetwork.IsMasterClient) return;
 		gameNetworkHandler.gameData.currentTurn = PhotonNetwork.LocalPlayer.NickName;
 		myTurn = true;
+		gameNetworkHandler.thisPlayerTurnIndicator.SetActive(true);
 		assignedCards = true;
 		Card first = null;
 		if (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber < 10)
@@ -335,18 +337,22 @@ public class Control : MonoBehaviour
 		return false;
 	}
 	
-	public void startWild(string name, int cardIndex, int specNumb) { //this starts the color chooser for the player to choose a color after playing a  wild
+	public void StartWild(string name, int cardIndex, int specNumb, GameObject playedCard, Control control) { //this starts the color chooser for the player to choose a color after playing a  wild
 		for (int i = 0; i < 4; i++) {
 			colors [i].SetActive (true);
-			addWildListeners (i, name, cardIndex, specNumb);
+			if (specNumb == 13)
+				colors[i].GetComponent<EnableOtherWildCard>().SetPlus4(false);
+			else if (specNumb == 14)
+				colors[i].GetComponent<EnableOtherWildCard>().SetPlus4(true);
+				
+			AddWildListeners (i, name, cardIndex, specNumb, playedCard, colors[i].transform.GetChild(0).GetComponent<RawImage>(), control);
 		}
 		colorText.SetActive (true);
 	}
-	public void addWildListeners(int i, string name, int cardIndex, int specNumb) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
+	public void AddWildListeners(int i, string name, int cardIndex, int specNumb, GameObject playedCard, RawImage cardColorImage, Control control) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
 		colors [i].GetComponent<Button> ().onClick.AddListener (() => {
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
-		
 			//Destroy(discardPileObj);
 			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 			//discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
@@ -355,6 +361,7 @@ public class Control : MonoBehaviour
 				x.SetActive (false);
 				x.GetComponent<Button>().onClick.RemoveAllListeners();
 			}
+			
 			colorText.SetActive (false);
 			this.enabled=true;
 			if (specNumb == 13)
@@ -363,6 +370,8 @@ public class Control : MonoBehaviour
 					wildColor, cardIndex);
 				recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
+				print(playedCard.name);
+				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
 			}
 			else if (specNumb == 14)
 			{
@@ -380,24 +389,14 @@ public class Control : MonoBehaviour
 				}
 
 				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
-				
+				print(playedCard.name);
+				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
+
 				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 			}
-
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
+			
 			players[0].NextPlayersTurn(gameNetworkHandler, this);
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
 			FindObjectOfType<Control>().players[0].turn();
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
 
 		});
 	}
@@ -418,6 +417,24 @@ public class Control : MonoBehaviour
 				playerIndex++;
 			else
 				playerIndex = 0;
+		}
+
+		while (gameNetworkHandler.gameData.players[playerIndex].won)
+		{
+			if (gameNetworkHandler.gameData.reversed)
+			{
+				if (playerIndex > 0)
+					playerIndex--;
+				else
+					playerIndex = PhotonNetwork.PlayerList.Length - 1;
+			}
+			else
+			{
+				if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+					playerIndex++;
+				else
+					playerIndex = 0;
+			}
 		}
 
 		return playerIndex;

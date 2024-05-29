@@ -14,8 +14,9 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public int maxPlayers;
     public GameData gameData;
     public CardInfo cardInfo;
-    public bool gameStarted;
-    
+    public int scoreForLeaderboard;
+    public GameObject thisPlayerTurnIndicator;
+
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
     [SerializeField] private GameObject[] otherPlayers;
@@ -23,13 +24,54 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private TMP_Text[] otherPlayersUsernameTexts;
     [SerializeField] private Image thisPlayerProfileImage;
     [SerializeField] private TMP_Text thisPlayerName;
-    
+    [SerializeField] private GameObject[] crowns;
+    [SerializeField] public GameObject funOButton;
     [SerializeField] private GameObject otherCardPrefab;
     [SerializeField] private Animator drawOther;
-    
+    [SerializeField] private GameObject thisPlayerCrown;
+    [SerializeField] private GameObject[] otherTurnIndicators;
+
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;
     private bool _downloadedAllImages;
+    private bool _scoreSent;
+
+    public void GameEnd()
+    {
+        for (int i = control.playerHand.transform.childCount - 1; i > 0; i--)
+            Destroy(control.playerHand.transform.GetChild(i).gameObject);
+
+        int playersWon = 0;
+        thisPlayerCrown.SetActive(true);
+        
+        foreach (var player in gameData.players)
+        {
+            if (player.won)
+                playersWon++;
+        }
+
+        if (playersWon > 0)
+            scoreForLeaderboard = 4000 / playersWon;
+        else
+            scoreForLeaderboard = 4000;
+    }
+
+    public void SendScore()
+    {
+        int playersWon = 0;
+        
+        foreach (var player in gameData.players)
+        {
+            if (player.won)
+                playersWon++;
+        }
+
+        if (playersWon == maxPlayers - 1 && !_scoreSent)
+        {
+            _scoreSent = true;
+            Bridge.GetInstance().SendScore(scoreForLeaderboard);
+        }
+    }
     
     IEnumerator DownloadImage(string MediaUrl, Image profilePic, bool thisPlayer = false)
     {   
@@ -64,6 +106,8 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         control.AssignCardsOnClients();
         UpdateTurns();
         UpdateOtherPlayerSet(false);
+
+        SendScore();
     }
 
     private void UpdateTurns()
@@ -71,7 +115,10 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         if (control.assignedCards)
             control.players[0].turn(true);
         if (gameData.currentTurn == PhotonNetwork.LocalPlayer.NickName)
+        {
             control.myTurn = true;
+            thisPlayerTurnIndicator.SetActive(true);
+        }
     }
 
     public void StartGame()
@@ -84,7 +131,8 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     
     public void UpdateOtherPlayerSet(bool assignLocation)
     {
-        ResetCards();
+        if (gameData.players.Count == maxPlayers)
+            ResetCards();
     }
 
     private void ResetCards()
@@ -97,27 +145,102 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
             }
         }
 
-        int n = 0;
-        if (maxPlayers == 2)
-            n = 1;
         for (int j = 0; j < gameData.players.Count; j++)
         {
-            var player = gameData.players[j];
-            if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName)) continue;
-            otherPlayersUsernameTexts[n].text = player.playerName;
-            if (!_downloadedAllImages)
-            {
-                otherPlayersProfileImages[n].transform.parent.parent.gameObject.SetActive(true);
-                StartCoroutine(DownloadImage(player.avatar, otherPlayersProfileImages[n]));
-            }
-            for (int i = 0; i < player.playerCardIndices.Count; i++)
-            {
-                Instantiate(otherCardPrefab, otherPlayers[n].transform);
-            }
+            if (maxPlayers == 2)
+                SetupFor2Players(j);
+            
+            if (maxPlayers == 3)
+                SetupFor3Players(j);
 
-            if (maxPlayers > 2)
-                n++;
+            if (maxPlayers == 4)
+                SetupFor4Players(j);
         }
+    }
+
+    private void SetupFor2Players(int playerScreen)
+    {
+        if (string.Equals(gameData.players[playerScreen].playerName, PhotonNetwork.LocalPlayer.NickName))
+        {
+            if (playerScreen == 0)
+                SetupPlayer(1, 1);
+            else if (playerScreen == 1)
+                SetupPlayer(0, 1);
+        }
+    }
+    
+    private void SetupFor3Players(int playerScreen)
+    {
+        if (string.Equals(gameData.players[playerScreen].playerName, PhotonNetwork.LocalPlayer.NickName))
+        {
+            if (playerScreen == 0)
+            {
+                SetupPlayer(1, 0);
+                SetupPlayer(2, 2);
+            }
+            else if (playerScreen == 1)
+            {
+                SetupPlayer(0, 2);
+                SetupPlayer(2, 0);
+            }
+            else if (playerScreen == 2)
+            {
+                SetupPlayer(0, 0);
+                SetupPlayer(1, 2);
+            }
+        }
+    }
+
+    private void SetupFor4Players(int playerScreen)
+    {
+        if (string.Equals(gameData.players[playerScreen].playerName, PhotonNetwork.LocalPlayer.NickName))
+        {
+            if (playerScreen == 0)
+            {
+                SetupPlayer(1, 0);
+                SetupPlayer(2, 1);
+                SetupPlayer(3, 2);
+            }
+            else if (playerScreen == 1)
+            {
+                SetupPlayer(0, 2);
+                SetupPlayer(2, 0);
+                SetupPlayer(3, 1);
+            }
+            else if (playerScreen == 2)
+            {
+                SetupPlayer(0, 1);
+                SetupPlayer(1, 2);
+                SetupPlayer(3, 0);
+            }
+            else if (playerScreen == 3)
+            {
+                SetupPlayer(0, 0);
+                SetupPlayer(1, 1);
+                SetupPlayer(2, 2);
+            }
+        }
+    }
+
+    private void SetupPlayer(int playerIndex, int place)
+    {
+        otherPlayersUsernameTexts[place].text = gameData.players[playerIndex].playerName;
+        if (!_downloadedAllImages)
+        {
+            otherPlayersProfileImages[place].transform.parent.parent.gameObject.SetActive(true);
+            StartCoroutine(DownloadImage(gameData.players[playerIndex].avatar, otherPlayersProfileImages[place]));
+        }
+        for (int i = 0; i < gameData.players[playerIndex].playerCardIndices.Count; i++)
+            Instantiate(otherCardPrefab, otherPlayers[place].transform);
+        if (gameData.players[playerIndex].playerCardIndices.Count == 0)
+            crowns[place].SetActive(true);
+        else
+            crowns[place].SetActive(false);
+
+        if (playerIndex == gameData.currentTurnIndex)
+            otherTurnIndicators[place].SetActive(true);
+        else
+            otherTurnIndicators[place].SetActive(false);
     }
 
     public void DrawAnimationOther()

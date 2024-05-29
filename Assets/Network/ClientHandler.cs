@@ -1,6 +1,7 @@
 using System;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ClientHandler : MonoBehaviour
 {
@@ -50,8 +51,14 @@ public class ClientHandler : MonoBehaviour
             if (text.Contains("skip"))
                 _control.skipAnimation.Play("popup", -1, 0f);
         }
+
         if (text.Contains("reverse"))
-            _control.reverseAnimation.Play("popup", -1, 0f);
+        {
+            if (!_gameNet.gameData.reversed)
+                _control.reverseAnimation.Play("reverse", -1, 0f);
+            else
+                _control.reverseAnimation.Play("reverse back", -1, 0f);
+        }
     }
 
     [PunRPC]
@@ -75,12 +82,10 @@ public class ClientHandler : MonoBehaviour
             card = new Card(cardNumber, cardColor, _control.drawCardPrefab);
         else if (string.Equals(cardName, "color"))
         {
-            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
             _control.wildColor = cardColor;
         }
         else if (string.Equals(cardName, "draw4"))
         {
-            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
             _control.wildColor = cardColor;
             // foreach (var player in _gameNet.gameData.players)
             // {
@@ -94,6 +99,17 @@ public class ClientHandler : MonoBehaviour
         else
             card = null;
         var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
-        _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
+        var topCard = _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
+        if (_control.wildColor != null)
+        {
+            if (_control.wildColor == "Red")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[0];
+            else if (_control.wildColor == "Green")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[1];
+            else if (_control.wildColor == "Blue")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[2];
+            else if (_control.wildColor == "Yellow")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[3];
+        }
     }
 }

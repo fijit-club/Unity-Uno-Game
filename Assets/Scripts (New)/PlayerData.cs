@@ -9,6 +9,7 @@ public class Player
     public string avatar;
     public int score = 0;
     public List<int> playerCardIndices = new List<int>();
+    public bool won = false;
 }
 
 [Serializable]
