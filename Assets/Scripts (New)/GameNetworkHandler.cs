@@ -43,15 +43,17 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
 
         int playersWon = 0;
         thisPlayerCrown.SetActive(true);
-        
+
         foreach (var player in gameData.players)
         {
             if (player.won)
                 playersWon++;
+            if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+                player.won = true;
         }
 
         if (playersWon > 0)
-            scoreForLeaderboard = 4000 / playersWon;
+            scoreForLeaderboard = 4000 - playersWon;
         else
             scoreForLeaderboard = 4000;
     }
