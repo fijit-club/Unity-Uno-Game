@@ -1,6 +1,7 @@
 using System;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ClientHandler : MonoBehaviour
 {
@@ -14,12 +15,13 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
-    private void RegisterPlayer(string playerName)
+    private void RegisterPlayer(string playerName, string avatar)
     {
         if (PhotonNetwork.IsMasterClient)
         {
             Player player = new Player();
             player.playerName = playerName;
+            player.avatar = avatar;
             _gameNet.gameData.players.Add(player);
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
@@ -36,16 +38,39 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
-    private void SendGameLog(string text)
+    private void DisableAllCatchButtons()
+    {
+        _gameNet.DisableCatchButtonsNoRPC();
+    }
+
+    [PunRPC]
+    private void SendGameLog(string text, string affectedPlayer)
     {
         _control.recieveText(text, false);
-        if (string.Equals(text, "draw"))
+        if (string.Equals(text, "draw") || text.Contains("drew") || text.Contains("draw"))
+        {
             _gameNet.DrawAnimationOther();
+            
+        }
+        if (string.Equals(affectedPlayer, PhotonNetwork.LocalPlayer.NickName))
+        {
+            if (text.Contains("skip"))
+                _control.skipAnimation.Play("popup", -1, 0f);
+        }
+
+        if (text.Contains("reverse"))
+        {
+            if (!_gameNet.gameData.reversed)
+                _control.reverseAnimation.Play("reverse", -1, 0f);
+            else
+                _control.reverseAnimation.Play("reverse back", -1, 0f);
+        }
     }
 
     [PunRPC]
     private void UpdateDiscardRegular(int cardNumber)
     {
+        _control.wildColor = null;
         var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
         _control.updateDiscPile(cardNumber, otherCardLocation.position.x, otherCardLocation.position.y);
     }
@@ -53,6 +78,7 @@ public class ClientHandler : MonoBehaviour
     [PunRPC]
     private void UpdateDiscardSpecial(int cardNumber, string cardName, string cardColor, int cardIndex)
     {
+        _control.wildColor = null;
         Card card;
         if (string.Equals(cardName, "reverse"))
             card = new Card(cardNumber, cardColor, _control.reverseCardPrefab);
@@ -62,12 +88,10 @@ public class ClientHandler : MonoBehaviour
             card = new Card(cardNumber, cardColor, _control.drawCardPrefab);
         else if (string.Equals(cardName, "color"))
         {
-            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
             _control.wildColor = cardColor;
         }
         else if (string.Equals(cardName, "draw4"))
         {
-            card = new Card(cardNumber, cardColor, _control.wildCardPrefab);
             _control.wildColor = cardColor;
             // foreach (var player in _gameNet.gameData.players)
             // {
@@ -81,6 +105,44 @@ public class ClientHandler : MonoBehaviour
         else
             card = null;
         var otherCardLocation = GameObject.Find("Opponent Card Location").transform;
-        _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
+        var topCard = _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
+        if (_control.wildColor != null)
+        {
+            if (_control.wildColor == "Red")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[0];
+            else if (_control.wildColor == "Green")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[1];
+            else if (_control.wildColor == "Blue")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[2];
+            else if (_control.wildColor == "Yellow")
+                topCard.GetComponent<RawImage>().texture = _control.colorTextures[3];
+        }
+    }
+
+    [PunRPC]
+    private void SayFuno(int playerIndex)
+    {
+        _gameNet.otherPlayersHandler[playerIndex].saidFUNO = true;
+        _gameNet.UpdateCatchButtonPlayers(playerIndex);
+    }
+
+    [PunRPC]
+    private void Catch(int playerIndex)
+    {
+        _gameNet.UpdateCatchButtonPlayers(playerIndex);
+        for (int i = 0; i < _gameNet.gameData.players.Count; i++)
+        {
+            if (i == playerIndex && string.Equals(_gameNet.gameData.players[i].playerName,
+                    PhotonNetwork.LocalPlayer.NickName))
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    _gameNet.gameData.players[playerIndex].playerCardIndices.Add(_gameNet.gameData.cardIndices[0]);
+                    _gameNet.gameData.cardIndices.RemoveAt(0);
+                }
+
+                PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+            }
+        }
     }
 }

@@ -28,7 +28,7 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	public void SetNetworkData()
 	{
-		if (testing)
+		if (Bridge.GetInstance().testing)
 			playerName = "PLAYER" + Random.Range(0, 20000);
 		else
 		{
@@ -39,10 +39,8 @@ public class Menu : MonoBehaviourPunCallbacks
 	
 	void Start () { //start function
 		vers.text = "Version: " + Application.version;
-		if (testing)
+		if (Bridge.GetInstance().testing)
 			playerName = "PLAYER" + Random.Range(0, 20000);
-		else
-			playerName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.username;
 
 		foreach (GameObject x in cards) { //sets a random color and number for the cards
 			string randColor = returnRandColor (Random.Range(0,4));

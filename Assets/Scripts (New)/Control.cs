@@ -22,7 +22,9 @@ public class Control : MonoBehaviour
 	public GameObject contentHolder;
 	public Text dialogueText;
 	public string wildColor;
-
+	public Transform tempHand;
+	public Animator skipAnimation;
+	public Animator reverseAnimation;
 	public static GameObject discardPileObj;
 
 	public GameObject regCardPrefab;
@@ -41,7 +43,9 @@ public class Control : MonoBehaviour
 	bool enabledStat=false;
 
 	[SerializeField] private Transform discardedPileLocation;
-
+	[SerializeField] public Transform deckLocation;
+	public Texture[] colorTextures;
+	
 	int where=0;
 	float timer=0;
 	bool reverse=false;
@@ -50,8 +54,8 @@ public class Control : MonoBehaviour
 	public static int numbOfAI;
 	[SerializeField] private TMP_Text currentTurnPlayerText;
 	
-	void Start () { //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
-
+	void Start () 
+	{ //this does all the setup. Makes the human and ai players. sets the deck and gets the game ready
 		players.Add(new HumanPlayer(PhotonNetwork.LocalPlayer.NickName));
 		// for (int i = 0; i < numbOfAI; i++)
 		// {
@@ -164,6 +168,7 @@ public class Control : MonoBehaviour
 		if (!PhotonNetwork.IsMasterClient) return;
 		gameNetworkHandler.gameData.currentTurn = PhotonNetwork.LocalPlayer.NickName;
 		myTurn = true;
+		gameNetworkHandler.thisPlayerTurnIndicator.SetActive(true);
 		assignedCards = true;
 		Card first = null;
 		if (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber < 10)
@@ -191,6 +196,10 @@ public class Control : MonoBehaviour
 
 		//gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
+		var tempDiscardObj = Instantiate(discardPileObj, discardPileObj.transform.parent, true);
+		tempDiscardObj.transform.localPosition = deckLocation.localPosition;
+		tempDiscardObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f).OnComplete(MoveComplete);
+		discardPileObj.SetActive(false);
 		discardPileObj.transform.position = discardedPileLocation.position;
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
@@ -201,7 +210,7 @@ public class Control : MonoBehaviour
 			//Card playerCard = new Card(cardData.cardNumber,
 			//	cardData.color, cardData.cardPrefab);
 			//players[0].addCards(playerCard);
-			
+
 			gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		}
 
@@ -215,9 +224,13 @@ public class Control : MonoBehaviour
 			}
 		}
 
-		print("ASSIGNED CARDS");
 		// players [0].turn ();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
+	}
+
+	private void MoveComplete()
+	{
+		discardPileObj.SetActive(true);
 	}
 
 	public void PlayCard(PlayCardData playCardData)
@@ -239,6 +252,15 @@ public class Control : MonoBehaviour
 			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 			var tempCard = first.loadCard(0, 0, GameObject.Find("Main").transform);
 			tempCard.transform.position = discardedPileLocation.position;
+			
+			var tempDiscardObj = Instantiate(tempCard, tempCard.transform.parent, true);
+			tempDiscardObj.transform.localPosition = deckLocation.localPosition;
+			tempDiscardObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f).OnComplete(() =>
+			{
+				tempCard.SetActive(true);
+				Destroy(tempDiscardObj);
+			});
+			tempCard.SetActive(false);
 
 			for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 			{
@@ -258,7 +280,7 @@ public class Control : MonoBehaviour
 			}
 		}
 
-		players[0].turn();
+		// players[0].turn();
 	}
 
 	string returnColorName (int numb) { //returns a color based on a number, used in setup
@@ -275,11 +297,11 @@ public class Control : MonoBehaviour
 		return "";
 	}
 	
-	public void recieveText(string text, bool sendToOthers = true) { //updates the dialogue box
+	public void recieveText(string text, bool sendToOthers = true, string affectedPlayer = "") { //updates the dialogue box
 		dialogueText.text += text + "\n";
 		contentHolder.GetComponent<RectTransform> ().localPosition = new Vector2 (0, contentHolder.GetComponent<RectTransform> ().sizeDelta.y);
 		if (sendToOthers)
-			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text);
+			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text, affectedPlayer);
 	}
 
 	public GameObject updateDiscPile(int cardIndex, float x = 0, float y = 0) { //this changes the last card played. Top of the discard pile
@@ -314,18 +336,22 @@ public class Control : MonoBehaviour
 		return false;
 	}
 	
-	public void startWild(string name, int cardIndex, int specNumb) { //this starts the color chooser for the player to choose a color after playing a  wild
+	public void StartWild(string name, int cardIndex, int specNumb, GameObject playedCard, Control control, int handIndex) { //this starts the color chooser for the player to choose a color after playing a  wild
 		for (int i = 0; i < 4; i++) {
 			colors [i].SetActive (true);
-			addWildListeners (i, name, cardIndex, specNumb);
+			if (specNumb == 13)
+				colors[i].GetComponent<EnableOtherWildCard>().SetPlus4(false);
+			else if (specNumb == 14)
+				colors[i].GetComponent<EnableOtherWildCard>().SetPlus4(true);
+				
+			AddWildListeners (i, name, cardIndex, specNumb, playedCard, colors[i].transform.GetChild(0).GetComponent<RawImage>(), control, handIndex);
 		}
 		colorText.SetActive (true);
 	}
-	public void addWildListeners(int i, string name, int cardIndex, int specNumb) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
+	public void AddWildListeners(int i, string name, int cardIndex, int specNumb, GameObject playedCard, RawImage cardColorImage, Control control, int handIndex) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
 		colors [i].GetComponent<Button> ().onClick.AddListener (() => {
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
-		
 			//Destroy(discardPileObj);
 			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 			//discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
@@ -333,6 +359,14 @@ public class Control : MonoBehaviour
 			foreach (GameObject x in colors) {
 				x.SetActive (false);
 				x.GetComponent<Button>().onClick.RemoveAllListeners();
+			}
+
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+				{
+					player.playerCardIndices.RemoveAt(handIndex);		
+				}
 			}
 			colorText.SetActive (false);
 			this.enabled=true;
@@ -342,18 +376,16 @@ public class Control : MonoBehaviour
 					wildColor, cardIndex);
 				recieveText(string.Format("{0} played a wild, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
+				print(playedCard.name);
+				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
 			}
 			else if (specNumb == 14)
 			{
+				int playerIndex = GetNextPlayerIndex();
+
 				FindObjectOfType<PhotonView>().RPC("UpdateDiscardSpecial", RpcTarget.Others, specNumb, "draw4",
 					wildColor, cardIndex);
-
-				int playerIndex = gameNetworkHandler.gameData.currentTurnIndex;
-
-				if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
-					playerIndex++;
-				else
-					playerIndex = 0;
+				recieveText("draw", affectedPlayer: gameNetworkHandler.gameData.players[playerIndex].playerName);
 
 				for (int j = 0; j < 4; j++)
 				{
@@ -363,40 +395,86 @@ public class Control : MonoBehaviour
 				}
 
 				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
-				
+				print(playedCard.name);
+				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
+
 				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
 			}
-
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
+			
 			players[0].NextPlayersTurn(gameNetworkHandler, this);
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
 			FindObjectOfType<Control>().players[0].turn();
-			foreach (var player in gameNetworkHandler.gameData.players)
-			{
-				print(player.playerCardIndices.Count);
-			}
 
 		});
+	}
+
+	private int GetNextPlayerIndex()
+	{
+		int playerIndex = gameNetworkHandler.gameData.currentTurnIndex;
+		if (gameNetworkHandler.gameData.reversed)
+		{
+			if (playerIndex > 0)
+				playerIndex--;
+			else
+				playerIndex = PhotonNetwork.PlayerList.Length - 1;
+		}
+		else
+		{
+			if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+				playerIndex++;
+			else
+				playerIndex = 0;
+		}
+
+		while (gameNetworkHandler.gameData.players[playerIndex].won)
+		{
+			if (gameNetworkHandler.gameData.reversed)
+			{
+				if (playerIndex > 0)
+					playerIndex--;
+				else
+					playerIndex = PhotonNetwork.PlayerList.Length - 1;
+			}
+			else
+			{
+				if (playerIndex < PhotonNetwork.PlayerList.Length - 1)
+					playerIndex++;
+				else
+					playerIndex = 0;
+			}
+		}
+
+		return playerIndex;
 	}
 
 	[SerializeField] private Animator deckAnim;
 	
 	public void PlayerDraw()
 	{
-		if (myTurn)
+		bool won = false;
+
+		foreach (var player in gameNetworkHandler.gameData.players)
 		{
-			deckAnim.Play("DeckPick", -1, 0f);
-			myTurn = false;
-			recieveText ("draw");
-			players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
-			draw(1);
+			if (player.playerCardIndices.Count == 1)
+				gameNetworkHandler.DisableCatchButtons();
+			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			{
+				won = player.won;
+				if (!won)
+				{
+					if (string.Equals(gameNetworkHandler.gameData.currentTurn, player.playerName))
+					{
+						deckAnim.Play("DeckPick", -1, 0f);
+						myTurn = false;
+						recieveText("draw");
+						players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
+						draw(1);
+					}
+
+				}
+			}
 		}
+
+		
 	}
 	
 	public void draw(int amount) { //gives cards to the players. Players can ask to draw or draw will actrivate from special cards
