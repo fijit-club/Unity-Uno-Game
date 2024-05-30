@@ -203,7 +203,7 @@ public class Control : MonoBehaviour
 		discardPileObj.transform.position = discardedPileLocation.position;
 		gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
 		
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 7; i++)
 		{
 			gameNetworkHandler.gameData.players[0].playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 			//var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
@@ -217,7 +217,7 @@ public class Control : MonoBehaviour
 		for (int i = 1; i < gameNetworkHandler.gameData.players.Count; i++)
 		{
 			var player = gameNetworkHandler.gameData.players[i];
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < 7; j++)
 			{
 				player.playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 				gameNetworkHandler.gameData.cardIndices.RemoveAt(0);
