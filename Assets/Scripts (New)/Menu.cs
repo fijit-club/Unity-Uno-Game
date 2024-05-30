@@ -122,7 +122,7 @@ public class Menu : MonoBehaviourPunCallbacks
 
 	private void CreateRoom()
 	{
-		if (!testing)
+		if (!Bridge.GetInstance().testing)
 			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
 		PhotonNetwork.JoinRoom(roomName);
 	}
