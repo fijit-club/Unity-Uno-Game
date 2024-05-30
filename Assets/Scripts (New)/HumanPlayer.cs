@@ -133,7 +133,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					thisLocalPlayer = player;
 			}
 
-			if (thisLocalPlayer != null && (thisLocalPlayer.playerCardIndices.Count > 1 || thisLocalPlayer.playerCardIndices.Count == 0)) _funoCannotBeEnabled = false;
+			if (thisLocalPlayer != null && (thisLocalPlayer.playerCardIndices.Count > 1 ||
+			                                thisLocalPlayer.playerCardIndices.Count == 0)) _funoCannotBeEnabled = false;
 
 			if (!_funoCannotBeEnabled)
 			{
@@ -147,6 +148,22 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					_gameNet.funOButton.SetActive(false);
 				}
 			}
+
+			// foreach (var player in _gameNet.gameData.players)
+			// {
+			// 	if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+			// 	{
+			// 		if (!string.Equals(player.playerName, _gameNet.gameData.currentTurn))
+			// 		{
+			// 			if (_gameNet.funOButton.activeInHierarchy)
+			// 			{
+			// 				_gameNet.funOButton.SetActive(false);
+			// 				_gameNet.FunoButtonPress();
+			// 			}
+			// 		}
+			// 	}
+			// }
+			
 
 			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
 			//print(card.cardNumber + " " + string.Equals(card.color, topCardInDiscardDeck.color));
@@ -228,6 +245,9 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	{
 		foreach (var player in _gameNet.gameData.players)
 		{
+			if (player.playerCardIndices.Count == 1)
+				_gameNet.DisableCatchButtons();
+			
 			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
 			{
 				var control = FindObjectOfType<Control>();
@@ -240,11 +260,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 				if (control.myTurn)
 				{
-					player.playerCardIndices.RemoveAt(playCardData.handIndex);
+					playedWild = _gameNet.cardInfo.mainDeck[playCardData.cardIndex].cardNumber >= 13;
+					if (!playedWild)
+						player.playerCardIndices.RemoveAt(playCardData.handIndex);
 					
 					control.myTurn = false;
 					_gameNet.thisPlayerTurnIndicator.SetActive(false);
-					playedWild = _gameNet.cardInfo.mainDeck[playCardData.cardIndex].cardNumber >= 13;
 					if (player.playerCardIndices.Count == 0)
 						_gameNet.GameEnd();
 					PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
@@ -400,13 +421,13 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				if (specNumb == 13)
 				{
 					GameObject tempPlayedCard = topDiscardedCard;
-					cont.StartWild(name, cardIndex, specNumb, tempPlayedCard, cont);
+					cont.StartWild(name, cardIndex, specNumb, tempPlayedCard, cont, handIndex);
 				}
 
 				if (specNumb == 14)
 				{
 					GameObject tempPlayedCard = topDiscardedCard;
-					cont.StartWild(name, cardIndex, specNumb, tempPlayedCard, cont);
+					cont.StartWild(name, cardIndex, specNumb, tempPlayedCard, cont, handIndex);
 				}
 			}
 			else {
@@ -449,7 +470,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 								playerIndex--;
 							else
 								playerIndex = PhotonNetwork.PlayerList.Length - 1;
-						}
+						} 
 						else
 						{
 							if (playerIndex < PhotonNetwork.PlayerList.Length - 1)

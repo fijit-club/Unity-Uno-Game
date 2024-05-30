@@ -38,6 +38,12 @@ public class ClientHandler : MonoBehaviour
     }
 
     [PunRPC]
+    private void DisableAllCatchButtons()
+    {
+        _gameNet.DisableCatchButtonsNoRPC();
+    }
+
+    [PunRPC]
     private void SendGameLog(string text, string affectedPlayer)
     {
         _control.recieveText(text, false);

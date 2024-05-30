@@ -336,7 +336,7 @@ public class Control : MonoBehaviour
 		return false;
 	}
 	
-	public void StartWild(string name, int cardIndex, int specNumb, GameObject playedCard, Control control) { //this starts the color chooser for the player to choose a color after playing a  wild
+	public void StartWild(string name, int cardIndex, int specNumb, GameObject playedCard, Control control, int handIndex) { //this starts the color chooser for the player to choose a color after playing a  wild
 		for (int i = 0; i < 4; i++) {
 			colors [i].SetActive (true);
 			if (specNumb == 13)
@@ -344,11 +344,11 @@ public class Control : MonoBehaviour
 			else if (specNumb == 14)
 				colors[i].GetComponent<EnableOtherWildCard>().SetPlus4(true);
 				
-			AddWildListeners (i, name, cardIndex, specNumb, playedCard, colors[i].transform.GetChild(0).GetComponent<RawImage>(), control);
+			AddWildListeners (i, name, cardIndex, specNumb, playedCard, colors[i].transform.GetChild(0).GetComponent<RawImage>(), control, handIndex);
 		}
 		colorText.SetActive (true);
 	}
-	public void AddWildListeners(int i, string name, int cardIndex, int specNumb, GameObject playedCard, RawImage cardColorImage, Control control) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
+	public void AddWildListeners(int i, string name, int cardIndex, int specNumb, GameObject playedCard, RawImage cardColorImage, Control control, int handIndex) { //this is ran from the start wild. It sets each color option as a button and sets the onclick events
 		colors [i].GetComponent<Button> ().onClick.AddListener (() => {
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
@@ -360,7 +360,14 @@ public class Control : MonoBehaviour
 				x.SetActive (false);
 				x.GetComponent<Button>().onClick.RemoveAllListeners();
 			}
-			
+
+			foreach (var player in gameNetworkHandler.gameData.players)
+			{
+				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
+				{
+					player.playerCardIndices.RemoveAt(handIndex);		
+				}
+			}
 			colorText.SetActive (false);
 			this.enabled=true;
 			if (specNumb == 13)
@@ -447,6 +454,8 @@ public class Control : MonoBehaviour
 
 		foreach (var player in gameNetworkHandler.gameData.players)
 		{
+			if (player.playerCardIndices.Count == 1)
+				gameNetworkHandler.DisableCatchButtons();
 			if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
 			{
 				won = player.won;

@@ -48,6 +48,25 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         maxPlayers = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbySize;
     }
 
+    public void DisableCatchButtons()
+    {
+        foreach (var catchButton in otherCatchButtons)
+            catchButton.SetActive(false);
+        
+        for (int i = 0; i < gameData.players.Count; i++)
+            FindObjectOfType<PhotonView>().RPC("DisableAllCatchButtons", RpcTarget.Others);
+        
+        funOButton.SetActive(false);
+    }
+
+    public void DisableCatchButtonsNoRPC()
+    {
+        foreach (var catchButton in otherCatchButtons)
+            catchButton.SetActive(false);
+        
+        funOButton.SetActive(false);
+    }
+    
     public void FunoButtonPress()
     {
         pressedFunoButton = true;
@@ -60,7 +79,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
             if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
                 thisPlayerIndex = i;
         }
-
+        
         FindObjectOfType<PhotonView>().RPC("SayFuno", RpcTarget.Others, thisPlayerIndex);
         funOButton.SetActive(false);
     }
