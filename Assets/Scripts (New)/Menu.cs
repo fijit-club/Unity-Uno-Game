@@ -33,7 +33,7 @@ public class Menu : MonoBehaviourPunCallbacks
 		else
 		{
 			playerName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.username;
-			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbyId;
+			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
 		}
 	}
 	
@@ -123,7 +123,7 @@ public class Menu : MonoBehaviourPunCallbacks
 	private void CreateRoom()
 	{
 		if (!testing)
-			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.lobbyId;
+			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
 		PhotonNetwork.JoinRoom(roomName);
 	}
 

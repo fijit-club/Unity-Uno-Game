@@ -41,7 +41,7 @@ namespace FijitAddons
     {
         public string username;
         public string avatar;
-        public string lobbyId;
+        public string chatLobbyId;
         public int lobbySize;
         public bool isHost;
 
