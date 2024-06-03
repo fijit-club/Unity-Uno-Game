@@ -26,6 +26,11 @@ public class Menu : MonoBehaviourPunCallbacks
 	public GameObject[] toggles = new GameObject[5];
 	public bool testing;
 
+	public void ExitGame()
+	{
+		Bridge.GetInstance().SendScore(0);
+	}
+	
 	public void SetNetworkData()
 	{
 		if (Bridge.GetInstance().testing)
@@ -124,19 +129,19 @@ public class Menu : MonoBehaviourPunCallbacks
 	{
 		if (!Bridge.GetInstance().testing)
 			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
-		PhotonNetwork.JoinRoom(roomName);
+		PhotonNetwork.JoinRoom("test");
 	}
 
 	public override void OnJoinRoomFailed(short returnCode, string message)
 	{
 		RoomOptions roomOptions = new RoomOptions();
 		roomOptions.BroadcastPropsChangeToAll = true;
-		PhotonNetwork.CreateRoom(roomName, roomOptions);
+		PhotonNetwork.CreateRoom("test", roomOptions);
 	}
 
 	public override void OnCreateRoomFailed(short returnCode, string message)
 	{
-		PhotonNetwork.JoinRoom(roomName); //join if there is already a room
+		PhotonNetwork.JoinRoom("test"); //join if there is already a room
 	}
 
 	public override void OnJoinedRoom()

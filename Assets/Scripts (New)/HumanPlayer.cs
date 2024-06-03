@@ -13,7 +13,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 	bool skip=false;
 	bool drew =false;
 	bool playedWild;
-
+	[SerializeField] private ScrollRect hand;
+	
 	
 	string name;
 	List<Card> handList = new List<Card> ();
@@ -115,12 +116,14 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			var card = _gameNet.cardInfo.mainDeck[playerCardIndex];
 			Card cardObject = new Card(card.cardNumber, card.color, card.cardPrefab);
 			var currentCard = cardObject.loadCard(playerHand.transform);
+
 			CardDealAnimation(currentCard, control, i, fromUpdate);
 
 			var playCardData = currentCard.GetComponent<PlayCardData>();
 			playCardData.cardIndex = playerCardIndex;
 			playCardData.handIndex = i;
 			playCardData.cardObject = currentCard;
+			control.hand.enabled = true;
 			
 			SetListeners(currentCard);
 			var topCardInDiscardDeck = _gameNet.cardInfo.mainDeck[_gameNet.gameData.discardedCardIndices.Last()];
@@ -165,8 +168,6 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			// }
 			
 
-			//print(card.cardNumber + " " + (card.cardNumber == topCardInDiscardDeck.cardNumber));
-			//print(card.cardNumber + " " + string.Equals(card.color, topCardInDiscardDeck.color));
 			if ((card.cardNumber == topCardInDiscardDeck.cardNumber ||
 			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 ||
 			    string.Equals(card.color, FindObjectOfType<Control>().wildColor)) && string.Equals(
@@ -175,7 +176,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				//setListeners(playerCardIndex, temp, i);
 				currentCard.transform.GetChild (3).gameObject.SetActive (false);
 				currentCard.GetComponent<Button>().interactable = true;
-			}
+				var localPosition = currentCard.transform.localPosition;
+				//control.hand.enabled = false;
+				//localPosition.y = -127f;
+				//currentCard.transform.localPosition = localPosition;
+				//control.hand.enabled = true;
+			}	
 			else
 			{
 				currentCard.GetComponent<Button>().interactable = false;
@@ -526,6 +532,9 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					
 					for (int j = 0; j < 2; j++)
 					{
+						if (_gameNet.gameData.cardIndices.Count < 2) {
+							cont.resetDeck ();
+						}
 						_gameNet.gameData.players[playerIndex].playerCardIndices
 							.Add(_gameNet.gameData.cardIndices[0]);
 						_gameNet.gameData.cardIndices.RemoveAt(0);
@@ -534,7 +543,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 							_gameNet.cardInfo.mainDeck[cardIndex].color, cardIndex);
 						cont.updateDiscPile(cardIndex, playedCard.transform.position.x, playedCard.transform.position.y);
 					}
-					NextPlayersTurn(_gameNet, cont);
+
+					NextPlayersTurn(_gameNet, cont, true);
 				}
 
 				//handList.RemoveAt(handIndex);

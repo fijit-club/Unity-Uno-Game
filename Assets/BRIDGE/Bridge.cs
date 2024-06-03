@@ -283,7 +283,7 @@ namespace FijitAddons
         [ContextMenu("Send Initial Test")] //add initialdata tests here 
         public void SendTextData()
         {
-            //SendInitialData("{\"coins\": 123,\"playerData\": {\"shootPower\":25,\"shootSpeed\":20}}");
+            //SendInitialData("{\"coins\": 123,\"playerData\": {\"shootPower\":25,\"shootSpeed\":20}}"); 
             //SendInitialData("{\"coins\":3400,\"data\":{\"cannons\":[{\"id\":\"bvb-cannon-1\",\"attributes\":[{\"bvb-cannon-1-speed\":0,\"bvb-cannon-1-power\":0}]}]}}");
             //SendInitialData("{\"coins\":34,\"data\":{\"cars\":[{\"id\":\"bvb-cannon-1\",\"attributes\":[{\"id\":\"bvb-cannon-1-speed\",\"level\":91},{\"id\":\"bvb-cannon-1-power\",\"level\":92}]},{\"id\":\"bvb-cannon-2\",\"attributes\":[{\"id\":\"bvb-cannon-2-speed\",\"level\":3},{\"id\":\"bvb-cannon-2-power\",\"level\":2}]}]}}");
             //SendInitialData("{\"coins\": 3000,\"data\": null}");
@@ -291,7 +291,7 @@ namespace FijitAddons
             //Debug.Log( thisPlayerInfo.data);
             //SendInitialData("{\"coins\":384696,\"volumeBg\":true,\"volumeSfx\":true,\"highScore\":949,\"username\":\"kartik\",\"data\":{\"assets\":[{\"id\":\"space-dual-shooter-ship\",\"attributes\":[]},{\"id\":\"test-spaceship-2\",\"attributes\":[]}],\"saveData\":\"saste nashe\"}}");
             SendInitialData(
-                "{\"coins\":1894,\"data\":{\"assets\":[{\"attributes\":[],\"id\":\"knife-hit-knife-1\"},{\"attributes\":[],\"id\":\"knife-hit-knife-20\"}],\"saveData\":null,\"multiplayer\":{\"lobbyId\":\"6cf81551-6eb0-4485-a5cf-eac6949fb65d\",\"avatar\":\"https://assets.fijit.club/fijit-v2/avatars/2.png\",\"isHost\":true,\"lobbySize\":2,\"username\":\"skyhit\"}},\"highScore\":102050,\"sound\":true,\"vibration\":true}"); }
+                "{\"coins\":1894,\"data\":{\"assets\":[{\"attributes\":[],\"id\":\"knife-hit-knife-1\"},{\"attributes\":[],\"id\":\"knife-hit-knife-20\"}],\"saveData\":null,\"multiplayer\":{\"chatLobbyId\":\"6cf81551-6eb0-4485-a5cf-eac6949fb65d\",\"avatar\":\"https://assets.fijit.club/fijit-v2/avatars/2.png\",\"isHost\":true,\"lobbySize\":2,\"username\":\"skyhit\"}},\"highScore\":102050,\"sound\":true,\"vibration\":true}"); }
 
         [ContextMenu("Do Something2")]
         public void SendTextData2()

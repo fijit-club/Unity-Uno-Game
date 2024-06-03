@@ -21,6 +21,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public bool pressedFunoButton;
     public OtherPlayer[] otherPlayersHandler;
     public bool won;
+    public Animator userProfileAnim;
     
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
@@ -183,6 +184,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         {
             control.myTurn = true;
             thisPlayerTurnIndicator.SetActive(true);
+            userProfileAnim.Play("indicate turn", -1, 0f);
         }
         else
         {

@@ -13,8 +13,9 @@ public class Control : MonoBehaviour
 {
 	public bool myTurn;
 	
-	[SerializeField] private GameNetworkHandler gameNetworkHandler;
+	[SerializeField] public GameNetworkHandler gameNetworkHandler;
 
+	public HorizontalLayoutGroup hand;
 	public List<PlayerInterface> players = new List<PlayerInterface>();
 	//public List<int> deck = new List<int>();
 	//public List<int> discard = new List<int>();
@@ -169,6 +170,7 @@ public class Control : MonoBehaviour
 		gameNetworkHandler.gameData.currentTurn = PhotonNetwork.LocalPlayer.NickName;
 		myTurn = true;
 		gameNetworkHandler.thisPlayerTurnIndicator.SetActive(true);
+		gameNetworkHandler.userProfileAnim.Play("indicate turn", -1, 0f);
 		assignedCards = true;
 		Card first = null;
 		if (gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]].cardNumber < 10)
@@ -378,6 +380,7 @@ public class Control : MonoBehaviour
 				gameNetworkHandler.gameData.discardedCardIndices.Add(cardIndex);
 				print(playedCard.name);
 				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
+				players[0].NextPlayersTurn(gameNetworkHandler, this);
 			}
 			else if (specNumb == 14)
 			{
@@ -387,6 +390,9 @@ public class Control : MonoBehaviour
 					wildColor, cardIndex);
 				recieveText("draw", affectedPlayer: gameNetworkHandler.gameData.players[playerIndex].playerName);
 
+				if (gameNetworkHandler.gameData.cardIndices.Count < 4) {
+					resetDeck ();
+				}
 				for (int j = 0; j < 4; j++)
 				{
 					gameNetworkHandler.gameData.players[playerIndex].playerCardIndices
@@ -399,9 +405,9 @@ public class Control : MonoBehaviour
 				playedCard.GetComponent<RawImage>().texture = cardColorImage.texture;
 
 				recieveText(string.Format("{0} played a wild draw 4, Color: {1}",PhotonNetwork.LocalPlayer.NickName,colorsMatch[i]));
+				players[0].NextPlayersTurn(gameNetworkHandler, this, true);
 			}
 			
-			players[0].NextPlayersTurn(gameNetworkHandler, this);
 			FindObjectOfType<Control>().players[0].turn();
 
 		});
@@ -497,19 +503,15 @@ public class Control : MonoBehaviour
 		players[0].turn();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
 	}
-	public void resetDeck() { //this resets the deck when all of the cards run out
+	public void resetDeck()
+	{
 		// print ("reseting");
-		// foreach (int x in discard) {
-		// 	var cardData = gameNetworkHandler.cardInfo.mainDeck[x];
-		// 	if (cardData.cardNumber == 13 || cardData.cardNumber == 14) {
-		// 		x.changeColor ("Black");
-		// 	}
-		// 	deck.Add (x);
-		//}
-		// shuffle ();
-		// Card last = discard [discard.Count - 1];
-		// discard.Clear ();
-		// discard.Add (last);
+		for (int i = 0; i < gameNetworkHandler.gameData.discardedCardIndices.Count - 1; i++)
+		{
+			int discardedCardIndex = gameNetworkHandler.gameData.discardedCardIndices[i];
+			gameNetworkHandler.gameData.cardIndices.Add(discardedCardIndex);
+			gameNetworkHandler.gameData.discardedCardIndices.RemoveAt(i);
+		}
 	}
 	public void specialCardPlay(PlayerInterface player, int cardNumb) { //takes care of all special cards played
 		int who = players.FindIndex (e=>e.Equals(player)) + (reverse?-1:1);
