@@ -22,6 +22,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public OtherPlayer[] otherPlayersHandler;
     public bool won;
     public Animator userProfileAnim;
+    public TimerHandler timer;
     
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
@@ -37,7 +38,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject thisPlayerCrown;
     [SerializeField] private GameObject[] otherTurnIndicators;
     [SerializeField] private GameObject[] otherCatchButtons;
-
+    
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;
     private bool _downloadedAllImages;

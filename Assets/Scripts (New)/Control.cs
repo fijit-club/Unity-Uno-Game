@@ -198,6 +198,8 @@ public class Control : MonoBehaviour
 
 		//gameNetworkHandler.gameData.discardedCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 		discardPileObj = first.loadCard(0, 0, GameObject.Find("Main").transform);
+			
+		discardPileObj.GetComponent<PlayCardData>().UpdateCard();
 		var tempDiscardObj = Instantiate(discardPileObj, discardPileObj.transform.parent, true);
 		tempDiscardObj.transform.localPosition = deckLocation.localPosition;
 		tempDiscardObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f).OnComplete(MoveComplete);
@@ -254,6 +256,7 @@ public class Control : MonoBehaviour
 			Card first = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 			var tempCard = first.loadCard(0, 0, GameObject.Find("Main").transform);
 			tempCard.transform.position = discardedPileLocation.position;
+			tempCard.GetComponent<PlayCardData>().UpdateCard();
 			
 			var tempDiscardObj = Instantiate(tempCard, tempCard.transform.parent, true);
 			tempDiscardObj.transform.localPosition = deckLocation.localPosition;
@@ -314,6 +317,7 @@ public class Control : MonoBehaviour
 		Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 		
 		discardPileObj=card.loadCard ((int) x, (int) y, GameObject.Find ("Main").transform);
+		discardPileObj.GetComponent<PlayCardData>().UpdateCard();
 		discardPileObj.transform.position = new Vector3(x, y);
 		players[0].turn();
 		discardPileObj.transform.DOLocalMove(discardedPileLocation.localPosition, .1f);
@@ -453,6 +457,8 @@ public class Control : MonoBehaviour
 	}
 
 	[SerializeField] private Animator deckAnim;
+	public bool drew;
+	public int lastDrawnCard;
 	
 	public void PlayerDraw()
 	{
@@ -472,10 +478,10 @@ public class Control : MonoBehaviour
 						deckAnim.Play("DeckPick", -1, 0f);
 						myTurn = false;
 						recieveText("draw");
-						players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
+						//players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
+						drew = true;
 						draw(1);
 					}
-
 				}
 			}
 		}
@@ -487,6 +493,7 @@ public class Control : MonoBehaviour
 		if (gameNetworkHandler.gameData.cardIndices.Count < amount) {
 			resetDeck ();
 		}
+		
 		for (int i = 0; i < amount; i++) {
 			// var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.cardIndices[0]];
 			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
@@ -495,11 +502,13 @@ public class Control : MonoBehaviour
 			{
 				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
 				{
+					lastDrawnCard = gameNetworkHandler.gameData.cardIndices[0];
 					player.playerCardIndices.Add(gameNetworkHandler.gameData.cardIndices[0]);
 				}
 			}
 			gameNetworkHandler.gameData.cardIndices.RemoveAt (0);
 		}
+		
 		players[0].turn();
 		PhotonNetwork.CurrentRoom.SetCustomProperties(gameNetworkHandler.GetJSONGameData());
 	}

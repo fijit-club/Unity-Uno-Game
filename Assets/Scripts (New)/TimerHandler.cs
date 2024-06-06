@@ -1,3 +1,4 @@
+using FijitAddons;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,12 +8,15 @@ public class TimerHandler : MonoBehaviour
     
     [SerializeField] private Control control;
     [SerializeField] private bool thisPlayer;
+    [SerializeField] private GameObject[] wildCardsScreen;
     
     [SerializeField] private float _time;
     private Image _turnTimerImage;
     
     private void OnEnable()
     {
+        Bridge.GetInstance().VibrateBridge(Bridge.Haptics.notificationError);
+        
         _turnTimerImage = GetComponent<Image>();
         _time = maxTime;
         
@@ -34,7 +38,31 @@ public class TimerHandler : MonoBehaviour
     {
         _time -= 1;
         if (_time == 0)
+        {
+            StopTimer(true);
             control.players[0].NextPlayersTurn(control.gameNetworkHandler, control);
+        }
+    }
+
+    private void OnDisable()
+    {
+        StopTimer(false);
+    }
+
+    public void StopTimer(bool disableWild)
+    {
+        if (disableWild)
+        {
+            foreach (var wild in wildCardsScreen)
+            {
+                wild.SetActive(false);
+            }
+
+            control.players[0].playedWild = false;
+        }
+        _time = maxTime;
+        CancelInvoke(nameof(ReduceTime));
+        CancelInvoke(nameof(ReduceTimeOther));
     }
 
     private void Update()

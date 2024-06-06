@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
+using FijitAddons;
 using Photon.Pun;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -12,7 +13,6 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 	bool skip=false;
 	bool drew =false;
-	bool playedWild;
 	[SerializeField] private ScrollRect hand;
 	
 	
@@ -32,11 +32,11 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		set{ skip = value; }
 	}
 
+	public bool playedWild { get; set; }
+
 	private bool _funoCannotBeEnabled;
 
 	public void turn(bool fromUpdate = false) { //does the turn
-		playedWild = false;
-		drew = false;
 		//int i = 0;
 		_gameNet = FindObjectOfType<GameNetworkHandler>();
 		
@@ -110,15 +110,19 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		{
 			Destroy(playerHand.transform.GetChild(j).gameObject);
 		}
+
+		int playableCards = thisPlayer.playerCardIndices.Count;
+		
 		foreach (int playerCardIndex in thisPlayer.playerCardIndices)
 		{
 			// temp = handList[i].loadCard(GameObject.Find("Control").GetComponent<Control>().playerHand.transform);
 			var card = _gameNet.cardInfo.mainDeck[playerCardIndex];
 			Card cardObject = new Card(card.cardNumber, card.color, card.cardPrefab);
 			var currentCard = cardObject.loadCard(playerHand.transform);
-
+			currentCard.GetComponent<PlayCardData>().MakeChild();
+			currentCard.GetComponent<PlayCardData>().UpdateCard();
 			CardDealAnimation(currentCard, control, i, fromUpdate);
-
+			
 			var playCardData = currentCard.GetComponent<PlayCardData>();
 			playCardData.cardIndex = playerCardIndex;
 			playCardData.handIndex = i;
@@ -174,9 +178,15 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				    _gameNet.gameData.currentTurn, PhotonNetwork.LocalPlayer.NickName))
 			{
 				//setListeners(playerCardIndex, temp, i);
-				currentCard.transform.GetChild (3).gameObject.SetActive (false);
+				currentCard.GetComponent<PlayCardData>().SetDarkOverlay(false, false);
 				currentCard.GetComponent<Button>().interactable = true;
-				var localPosition = currentCard.transform.localPosition;
+				var rawImageCurrentCard = currentCard.GetComponent<RawImage>().color;
+				rawImageCurrentCard.a = 0f;
+				currentCard.GetComponent<RawImage>().color = rawImageCurrentCard;
+				//currentCard.GetComponent<PlayCardData>().MakeChild();
+				if (!playedWild)
+					currentCard.GetComponent<PlayCardData>().MoveUp();
+				
 				//control.hand.enabled = false;
 				//localPosition.y = -127f;
 				//currentCard.transform.localPosition = localPosition;
@@ -185,10 +195,33 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			else
 			{
 				currentCard.GetComponent<Button>().interactable = false;
-				currentCard.transform.GetChild (3).gameObject.SetActive (true);
+				if (!_cardsDealt)
+					currentCard.GetComponent<PlayCardData>().SetDarkOverlay(true, true);
+				else
+					currentCard.GetComponent<PlayCardData>().SetDarkOverlay(true, false);
+				playableCards--;
 			}
 			i++;
 		}
+
+		if (control.drew)
+		{
+			control.drew = false;
+			var card = _gameNet.cardInfo.mainDeck[control.lastDrawnCard];
+			var topCard = _gameNet.cardInfo.mainDeck[_gameNet.gameData.discardedCardIndices.Last()];
+			if ((card.cardNumber != topCard.cardNumber && !string.Equals(card.color, topCard.color) &&
+			     card.cardNumber < 13 && !string.Equals(card.color, FindObjectOfType<Control>().wildColor)))
+			{
+				control.players[0].NextPlayersTurn(_gameNet, control);
+			}
+			else
+			{
+				if (playableCards != 1)
+					control.players[0].NextPlayersTurn(_gameNet, control);
+			}
+		}
+
+		playedWild = false;
 
 		// foreach (Card x in handList) { //foreach card in hand
 		// 	
@@ -249,6 +282,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 	public void PlayTurn(PlayCardData playCardData)
 	{
+		Bridge.GetInstance().VibrateBridge(Bridge.Haptics.rigid);
 		foreach (var player in _gameNet.gameData.players)
 		{
 			if (player.playerCardIndices.Count == 1)
@@ -408,7 +442,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 		for(int i=cont.playerHand.transform.childCount-1;i>=0;i--) {
 			cont.playerHand.transform.GetChild(i).GetComponent<Button>().onClick.RemoveAllListeners();
-			cont.playerHand.transform.GetChild (i).GetChild (3).gameObject.SetActive (false);
+			//cont.playerHand.transform.GetChild (i).GetChild(0).GetChild(4).gameObject.SetActive (false);
 		}
 		if (drew) {
 			cont.GetComponent<Control> ().enabled = true;
@@ -423,6 +457,8 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				// {
 				// 	handList.RemoveAt(handIndex);
 				// }
+				
+				//_gameNet.timer.StopTimer();
 
 				if (specNumb == 13)
 				{

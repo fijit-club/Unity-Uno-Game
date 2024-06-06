@@ -64,6 +64,7 @@ public class Card : MonoBehaviour {
 		temp.GetComponent<RawImage> ().texture = Resources.Load (color + "Card") as Texture2D;
 		temp.transform.SetParent (parent);
 		temp.transform.localScale = new Vector3 (1, 1, 1);
+		temp.transform.GetChild(temp.transform.childCount - 1).SetAsFirstSibling();
 		return temp;
 	}
 	Color returnColor(string what) { //returns a color based on the color string

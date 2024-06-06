@@ -9,6 +9,8 @@ public interface PlayerInterface { //the interface the is inherited by the playe
 		get;
 		set;
 	}
+
+	bool playedWild { get; set; }
 	void addCards(Card other);
 	string getName();
 	bool Equals(PlayerInterface other);

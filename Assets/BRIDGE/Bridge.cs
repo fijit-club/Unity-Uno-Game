@@ -109,9 +109,31 @@ namespace FijitAddons
         private static extern void setSavedata(string savedata);
 
         [DllImport("__Internal")]
-        private static extern void vibrate(bool isLong);
+        private static extern void vibrate(string value);
 #endif
 
+        public enum Haptics
+        
+        {
+            impactLight,
+            impactMedium,
+            impactHeavy,
+            rigid,
+            soft,
+            notificationSuccess,
+            notificationWarning,
+            notificationError
+    
+        }
+        
+        public void VibrateBridge(Haptics haptics)
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+    if(thisPlayerInfo.vibration)
+      vibrate(haptics.ToString());
+#endif
+        }
+        
         public static Bridge GetInstance()
         {
             return instance;

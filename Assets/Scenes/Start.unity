@@ -876,7 +876,7 @@ MonoBehaviour:
         username: tushar
         avatar: https://assets.fijit.club/fijit-v2/avatars/6.png
         chatLobbyId: test
-        lobbySize: 2
+        lobbySize: 3
         isHost: 0
   coinsCollected: 0
   testing: 1
