@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class Menu : MonoBehaviourPunCallbacks
 {
 	[SerializeField] private string playerName;
-	[SerializeField] private string roomName;
+	[SerializeField] private string roomName = "test";
 
 	public Text vers;
 	public GameObject[] cards;
@@ -118,7 +118,10 @@ public class Menu : MonoBehaviourPunCallbacks
 	public void setup(bool openClose) { //starts the setup canvas screen
 		
 		PhotonNetwork.LocalPlayer.NickName = playerName;
-		CreateRoom(); //Create room
+		if (Bridge.GetInstance().thisPlayerInfo.data.multiplayer.isHost) 
+			CreateRoom(); //Create room
+		else
+			JoinRoom();
 	}
 	public void TryCreateRoom()
 	{
@@ -129,19 +132,27 @@ public class Menu : MonoBehaviourPunCallbacks
 	{
 		if (!Bridge.GetInstance().testing)
 			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
-		PhotonNetwork.JoinRoom("test");
+		RoomOptions roomOptions = new RoomOptions();
+		roomOptions.BroadcastPropsChangeToAll = true;
+		PhotonNetwork.CreateRoom(roomName, roomOptions);
 	}
 
 	public override void OnJoinRoomFailed(short returnCode, string message)
 	{
-		RoomOptions roomOptions = new RoomOptions();
-		roomOptions.BroadcastPropsChangeToAll = true;
-		PhotonNetwork.CreateRoom("test", roomOptions);
+		print(message);
+		JoinRoom();
+	}
+
+	private void JoinRoom()
+	{
+		if (!Bridge.GetInstance().testing)
+			roomName = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.chatLobbyId;
+		PhotonNetwork.JoinRoom(roomName);
 	}
 
 	public override void OnCreateRoomFailed(short returnCode, string message)
 	{
-		PhotonNetwork.JoinRoom("test"); //join if there is already a room
+		CreateRoom();
 	}
 
 	public override void OnJoinedRoom()

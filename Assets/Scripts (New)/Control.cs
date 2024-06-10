@@ -248,6 +248,11 @@ public class Control : MonoBehaviour
 
 		if (assignedCards || PhotonNetwork.IsMasterClient) return;
 
+		if (gameNetworkHandler.gameData.players.Count >= gameNetworkHandler.maxPlayers)
+		{
+			gameNetworkHandler.DeactivateWaitingUI();
+		}
+
 		print(gameNetworkHandler.cardInfo.mainDeck.Count);
 		print(gameNetworkHandler.gameData.discardedCardIndices.Count);
 		if (gameNetworkHandler.gameData.discardedCardIndices.Count > 0)
@@ -305,6 +310,7 @@ public class Control : MonoBehaviour
 	public void recieveText(string text, bool sendToOthers = true, string affectedPlayer = "") { //updates the dialogue box
 		dialogueText.text += text + "\n";
 		contentHolder.GetComponent<RectTransform> ().localPosition = new Vector2 (0, contentHolder.GetComponent<RectTransform> ().sizeDelta.y);
+		print(affectedPlayer);
 		if (sendToOthers)
 			FindObjectOfType<PhotonView>().RPC("SendGameLog", RpcTarget.Others, text, affectedPlayer);
 	}
@@ -317,6 +323,7 @@ public class Control : MonoBehaviour
 		Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
 		
 		discardPileObj=card.loadCard ((int) x, (int) y, GameObject.Find ("Main").transform);
+		discardPileObj.transform.GetChild(0).gameObject.SetActive(false);
 		discardPileObj.GetComponent<PlayCardData>().UpdateCard();
 		discardPileObj.transform.position = new Vector3(x, y);
 		players[0].turn();
@@ -359,10 +366,11 @@ public class Control : MonoBehaviour
 			var cardData = gameNetworkHandler.cardInfo.mainDeck[gameNetworkHandler.gameData.discardedCardIndices.Last()];
 			wildColor = colorsMatch[i];
 			//Destroy(discardPileObj);
-			// Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
-			//discardPileObj=card.loadCard (0, 0, GameObject.Find ("Main").transform);
-			 
-			foreach (GameObject x in colors) {
+			//Card card = new Card(cardData.cardNumber, cardData.color, cardData.cardPrefab);
+			//discardPileObj = card.loadCard(0, 0, GameObject.Find("Main").transform);
+			print(discardPileObj.name);
+			foreach (GameObject x in colors) 
+			{
 				x.SetActive (false);
 				x.GetComponent<Button>().onClick.RemoveAllListeners();
 			}
@@ -477,7 +485,7 @@ public class Control : MonoBehaviour
 					{
 						deckAnim.Play("DeckPick", -1, 0f);
 						myTurn = false;
-						recieveText("draw");
+						recieveText("draw", affectedPlayer: PhotonNetwork.LocalPlayer.NickName);
 						//players[0].NextPlayersTurn(gameNetworkHandler, GetComponent<Control>());
 						drew = true;
 						draw(1);

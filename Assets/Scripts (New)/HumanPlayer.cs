@@ -251,15 +251,20 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		Canvas.ForceUpdateCanvases();
 		var tempPlayerCard = Instantiate(currentCard, control.tempHand, true);
 		tempPlayerCard.transform.position = control.deckLocation.position;
+		print("TEST TEMP 1");
 		tempPlayerCard.transform.DOLocalMove(currentCard.transform.localPosition, .1f * i).OnComplete(() =>
 		{
+			print("TEST TEMP 2");
+			Destroy(tempPlayerCard);
 			currentCard.GetComponent<RawImage>().enabled = true;
 			for (int j = 0; j < currentCard.transform.childCount - 1; j++)
 			{
 				currentCard.transform.GetChild(j).gameObject.SetActive(true);
 			}
-			Destroy(tempPlayerCard);
+			print("TEST TEMP 3");
+			print("TEST TEMP 4");
 			cardsDestroyed++;
+			print(cardsDestroyed);
 			if (cardsDestroyed >= 7)
 			{
 				for (int j = control.tempHand.childCount - 1; j > 0; j--)

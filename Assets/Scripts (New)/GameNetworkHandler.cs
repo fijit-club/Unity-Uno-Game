@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using FijitAddons;
 using Newtonsoft.Json;
 using Photon.Pun;
@@ -23,6 +24,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public bool won;
     public Animator userProfileAnim;
     public TimerHandler timer;
+    public GameObject[] otherPlayersNamesHandler;
     
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
@@ -38,12 +40,16 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject thisPlayerCrown;
     [SerializeField] private GameObject[] otherTurnIndicators;
     [SerializeField] private GameObject[] otherCatchButtons;
+    [SerializeField] private Transform movingDeck;
+    [SerializeField] private Transform movingDeckPosition;
     
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;
     private bool _downloadedAllImages;
     private bool _scoreSent;
     private bool _catch;
+    private bool _gameStarted;
+    private bool _dealtCards;
     
     private void Awake()
     {
@@ -154,9 +160,14 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     {
         print(PhotonNetwork.CurrentRoom.CustomProperties);
 
+        var lastTurn = gameData.currentTurnIndex;
         GameData tempGameData =
             JsonConvert.DeserializeObject<GameData>((string) PhotonNetwork.CurrentRoom.CustomProperties["GAME"]);
         gameData = tempGameData;
+        if (lastTurn != gameData.currentTurnIndex)
+        {
+            FindObjectOfType<ClientHandler>().caughtCards = false;
+        }
 
         control.AssignCardsOnClients();
         UpdateTurns();
@@ -396,6 +407,9 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         }
         for (int i = 0; i < gameData.players[playerIndex].playerCardIndices.Count; i++)
             Instantiate(otherCardPrefab, otherPlayers[place].transform);
+
+        otherPlayers[place].transform.parent.parent.GetComponent<OtherPlayerHandler>().playerName = gameData.players[playerIndex].playerName;
+        
         if (gameData.players[playerIndex].playerCardIndices.Count == 0)
             crowns[place].SetActive(true);
         else
@@ -442,9 +456,74 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         FindObjectOfType<PhotonView>().RPC("Catch", RpcTarget.Others, playerIndex);
     }
     
-    public void DrawAnimationOther()
+    public void DrawAnimationOther(string playerName)
     {
-        drawOther.Play("draw other", -1, 0f);
+        Transform playerPlace = null;
+        print(playerName);
+
+        foreach (var otherPlayer in otherPlayersNamesHandler)
+        {
+            if (string.Equals(otherPlayer.GetComponent<OtherPlayerHandler>().playerName, playerName))
+                playerPlace = otherPlayer.transform;
+        }
+
+        movingDeck.position = movingDeckPosition.position;
+        if (playerPlace != null)
+        {
+            print(playerPlace.GetComponent<OtherPlayerHandler>().playerName);
+            print(playerPlace.gameObject.name);
+            movingDeck.DOMove(playerPlace.GetComponent<OtherPlayerHandler>().location.position, .1f).OnComplete(
+                () =>
+                {
+                    movingDeck.position = movingDeckPosition.position;
+                });}
+        //drawOther.Play("draw other", -1, 0f);
+    }
+
+    public override void OnPlayerPropertiesUpdate(Photon.Realtime.Player targetPlayer, Hashtable changedProps)
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Player player = new Player();
+            player.playerName = targetPlayer.NickName;
+            player.avatar = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar;
+
+            List<string> playerNameList = new List<string>();
+
+            foreach (var playerData in gameData.players)
+            {
+                playerNameList.Add(playerData.playerName);
+            }
+
+            if (!playerNameList.Contains(targetPlayer.NickName))
+                gameData.players.Add(player);
+
+            PhotonNetwork.CurrentRoom.SetCustomProperties(GetJSONGameData());
+        }
+        
+        if (gameData.players.Count >= maxPlayers)
+        {
+            if (PhotonNetwork.IsMasterClient && !_dealtCards)
+            {
+                _dealtCards = true;
+                StartGame();
+            }
+            else
+                DeactivateWaitingUI();
+        }
+    }
+
+    private void UpdatePlayerProps()
+    {
+        Player player = new Player();
+        player.playerName = PhotonNetwork.LocalPlayer.NickName;
+        player.avatar = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar;
+        //gameData.players.Add(player);
+
+        Hashtable hash = new Hashtable();
+        string playerJSON = JsonConvert.SerializeObject(player);
+        hash.Add("GAME", playerJSON);
+        PhotonNetwork.LocalPlayer.SetCustomProperties(hash);
     }
 
     private void Start()
@@ -452,12 +531,17 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
             AddMasterPlayer();
         else
-            SendRPCToMaster();
+            UpdatePlayerProps();
 
         StartCoroutine(DownloadImage(Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar,
             thisPlayerProfileImage, true));
-        print(PhotonNetwork.LocalPlayer.NickName);
         thisPlayerName.text = PhotonNetwork.LocalPlayer.NickName;
+    }
+
+    private IEnumerator DelayRPC()
+    {
+        yield return new WaitForSeconds(2f);
+        SendRPCToMaster();
     }
 
     public void DeactivateWaitingUI()

@@ -110,6 +110,9 @@ namespace FijitAddons
 
         [DllImport("__Internal")]
         private static extern void vibrate(string value);
+        
+        [DllImport("__Internal")]
+        private static extern void setSound(bool isOn);
 #endif
 
         public enum Haptics
@@ -331,10 +334,21 @@ namespace FijitAddons
         public void Silence(string silence)// called by app when goes in bg or is closed 
         {
             if (silence == "true")
+            {
                 AudioListener.pause = true;
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    setSound(false);
+#endif
+            }
 
             if (silence == "false")
+            {
                 AudioListener.pause = false;
+                
+#if UNITY_WEBGL && !UNITY_EDITOR
+                    setSound(true);
+#endif
+            }
             // Or / And
             //AudioListener.volume = silence ? 0 : 1;
 

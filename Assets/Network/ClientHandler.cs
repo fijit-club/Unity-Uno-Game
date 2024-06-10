@@ -14,6 +14,8 @@ public class ClientHandler : MonoBehaviour
         _control = FindObjectOfType<Control>();
     }
 
+    public bool caughtCards;
+
     [PunRPC]
     private void RegisterPlayer(string playerName, string avatar)
     {
@@ -49,7 +51,7 @@ public class ClientHandler : MonoBehaviour
         _control.recieveText(text, false);
         if (string.Equals(text, "draw") || text.Contains("drew") || text.Contains("draw"))
         {
-            _gameNet.DrawAnimationOther();
+            _gameNet.DrawAnimationOther(affectedPlayer);
             
         }
         if (string.Equals(affectedPlayer, PhotonNetwork.LocalPlayer.NickName))
@@ -108,14 +110,27 @@ public class ClientHandler : MonoBehaviour
         var topCard = _control.updateDiscPile(cardIndex, otherCardLocation.position.x, otherCardLocation.position.y);
         if (_control.wildColor != null)
         {
+            print(_control.wildColor);
             if (_control.wildColor == "Red")
+            {
                 topCard.GetComponent<RawImage>().texture = _control.colorTextures[0];
+                print("changed card to red");
+            }
             else if (_control.wildColor == "Green")
+            {
                 topCard.GetComponent<RawImage>().texture = _control.colorTextures[1];
+                print(_control.wildColor);
+            }
             else if (_control.wildColor == "Blue")
+            {
                 topCard.GetComponent<RawImage>().texture = _control.colorTextures[2];
+                print(_control.wildColor);
+            }
             else if (_control.wildColor == "Yellow")
+            {
                 topCard.GetComponent<RawImage>().texture = _control.colorTextures[3];
+                print(_control.wildColor);
+            }
         }
     }
 
@@ -135,10 +150,15 @@ public class ClientHandler : MonoBehaviour
             if (i == playerIndex && string.Equals(_gameNet.gameData.players[i].playerName,
                     PhotonNetwork.LocalPlayer.NickName))
             {
-                for (int j = 0; j < 7; j++)
+                if (!caughtCards)
                 {
-                    _gameNet.gameData.players[playerIndex].playerCardIndices.Add(_gameNet.gameData.cardIndices[0]);
-                    _gameNet.gameData.cardIndices.RemoveAt(0);
+                    for (int j = 0; j < 4; j++)
+                    {
+                        _gameNet.gameData.players[playerIndex].playerCardIndices.Add(_gameNet.gameData.cardIndices[0]);
+                        _gameNet.gameData.cardIndices.RemoveAt(0);
+                    }
+
+                    caughtCards = true;
                 }
 
                 PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
