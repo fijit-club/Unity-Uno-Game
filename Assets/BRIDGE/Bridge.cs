@@ -238,6 +238,7 @@ namespace FijitAddons
         public void SendInitialData(string json)
         {
             thisPlayerInfo = PlayerInfo.CreateFromJSON(json);
+            thisPlayerInfo.data.multiplayer.chatLobbyId = thisPlayerInfo.data.multiplayer.chatLobbyId.Substring(0, 5);
             Debug.Log(json);
             
             menu.SetNetworkData();

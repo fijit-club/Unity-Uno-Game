@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class ServerConnection : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameObject[] stuffToActivate;
+    [SerializeField] private GameObject connectingCanvas;
     
     private void Start()
     {
@@ -23,5 +24,6 @@ public class ServerConnection : MonoBehaviourPunCallbacks
         {
             stuff.SetActive(true);
         }
+        connectingCanvas.SetActive(false);
     }
 }

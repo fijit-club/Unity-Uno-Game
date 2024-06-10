@@ -45,6 +45,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private Transform movingDeck;
     [SerializeField] private Transform movingDeckPosition;
     public AudioSource cardPlay;
+    [SerializeField] private PlayerListHandler[] playerListItems;
     
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;
@@ -170,6 +171,23 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
         if (lastTurn != gameData.currentTurnIndex)
         {
             FindObjectOfType<ClientHandler>().caughtCards = false;
+        }
+
+        for (int i = 0; i < gameData.players.Count; i++)
+        {
+            var player = gameData.players[i];
+            if (!playerListItems[i].gameObject.activeSelf)
+            {
+                playerListItems[i].gameObject.SetActive(true);
+                playerListItems[i].playerNameText.text = player.playerName;
+                StartCoroutine(DownloadImage(player.avatar, playerListItems[i].playerAvatar));
+            }
+        }
+
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            playerListItems[0].playerNameText.text = gameData.players[0].playerName;
+            StartCoroutine(DownloadImage(gameData.players[0].avatar, playerListItems[0].playerAvatar));
         }
 
         control.AssignCardsOnClients();
@@ -503,6 +521,9 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(GetJSONGameData());
         }
+        else
+        {
+        }
         
         if (gameData.players.Count >= maxPlayers)
         {
@@ -564,8 +585,11 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     {
         Player player = new Player();
         player.playerName = PhotonNetwork.LocalPlayer.NickName;
+        print(player.playerName);
         player.avatar = Bridge.GetInstance().thisPlayerInfo.data.multiplayer.avatar;
         gameData.players.Add(player);
+        playerListItems[0].playerNameText.text = player.playerName;
+        StartCoroutine(DownloadImage(player.avatar, playerListItems[0].playerAvatar));
         PhotonNetwork.CurrentRoom.SetCustomProperties(GetJSONGameData());
     }
 
