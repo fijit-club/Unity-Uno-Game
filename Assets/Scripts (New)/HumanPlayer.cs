@@ -106,34 +106,47 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 		var control = GameObject.FindObjectOfType<Control>();
 		var playerHand = control.playerHand;
 
-		for (int j = playerHand.transform.childCount - 1; j >= 0; j--)
-		{
-			Destroy(playerHand.transform.GetChild(j).gameObject);
-		}
+		// for (int j = playerHand.transform.childCount - 1; j >= 0; j--)
+		// {
+		// 	Destroy(playerHand.transform.GetChild(j).gameObject);
+		// }
 
 		int playableCards = thisPlayer.playerCardIndices.Count;
-		
-		foreach (int playerCardIndex in thisPlayer.playerCardIndices)
+
+		for (int cardIndex = 0; cardIndex < thisPlayer.playerCardIndices.Count; cardIndex++)
 		{
+			int playerCardIndex = thisPlayer.playerCardIndices[cardIndex];
 			// temp = handList[i].loadCard(GameObject.Find("Control").GetComponent<Control>().playerHand.transform);
 			var card = _gameNet.cardInfo.mainDeck[playerCardIndex];
 			Card cardObject = new Card(card.cardNumber, card.color, card.cardPrefab);
-			var currentCard = cardObject.loadCard(playerHand.transform);
+			GameObject currentCard;
+			if (_gameNet.playerCardNames.Count > cardIndex && string.Equals(_gameNet.playerCardNames[cardIndex], (card.color + card.cardNumber)))
+			{
+				print(cardIndex);
+				print(_gameNet.playerCardList.Count);
+				currentCard = _gameNet.playerCardList[cardIndex];
+			}
+			else
+			{
+				currentCard = cardObject.loadCard(playerHand.transform);
+				_gameNet.playerCardNames.Add(card.color + card.cardNumber);
+				_gameNet.playerCardList.Add(currentCard);
+			}
 			currentCard.GetComponent<PlayCardData>().MakeChild();
 			currentCard.GetComponent<PlayCardData>().UpdateCard();
 			CardDealAnimation(currentCard, control, i, fromUpdate);
-			
+
 			var playCardData = currentCard.GetComponent<PlayCardData>();
 			playCardData.cardIndex = playerCardIndex;
 			playCardData.handIndex = i;
 			playCardData.cardObject = currentCard;
 			control.hand.enabled = true;
-			
+
 			SetListeners(currentCard);
 			var topCardInDiscardDeck = _gameNet.cardInfo.mainDeck[_gameNet.gameData.discardedCardIndices.Last()];
 
 			Player thisLocalPlayer = null;
-			
+
 			foreach (var player in _gameNet.gameData.players)
 			{
 				if (string.Equals(player.playerName, PhotonNetwork.LocalPlayer.NickName))
@@ -170,11 +183,11 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 			// 		}
 			// 	}
 			// }
-			
+
 
 			if ((card.cardNumber == topCardInDiscardDeck.cardNumber ||
-			    string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 ||
-			    string.Equals(card.color, FindObjectOfType<Control>().wildColor)) && string.Equals(
+			     string.Equals(card.color, topCardInDiscardDeck.color) || card.cardNumber >= 13 ||
+			     string.Equals(card.color, FindObjectOfType<Control>().wildColor)) && string.Equals(
 				    _gameNet.gameData.currentTurn, PhotonNetwork.LocalPlayer.NickName))
 			{
 				//setListeners(playerCardIndex, temp, i);
@@ -186,12 +199,12 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				//currentCard.GetComponent<PlayCardData>().MakeChild();
 				if (!playedWild)
 					currentCard.GetComponent<PlayCardData>().MoveUp();
-				
+
 				//control.hand.enabled = false;
 				//localPosition.y = -127f;
 				//currentCard.transform.localPosition = localPosition;
 				//control.hand.enabled = true;
-			}	
+			}
 			else
 			{
 				currentCard.GetComponent<Button>().interactable = false;
@@ -200,7 +213,9 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 				else
 					currentCard.GetComponent<PlayCardData>().SetDarkOverlay(true, false);
 				playableCards--;
+				currentCard.GetComponent<PlayCardData>().MoveDown();
 			}
+
 			i++;
 		}
 
@@ -287,6 +302,7 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 
 	public void PlayTurn(PlayCardData playCardData)
 	{
+		_gameNet.cardPlay.Play();
 		Bridge.GetInstance().VibrateBridge(Bridge.Haptics.rigid);
 		foreach (var player in _gameNet.gameData.players)
 		{
@@ -314,6 +330,10 @@ public class HumanPlayer : MonoBehaviour, PlayerInterface {
 					if (player.playerCardIndices.Count == 0)
 						_gameNet.GameEnd();
 					PhotonNetwork.CurrentRoom.SetCustomProperties(_gameNet.GetJSONGameData());
+
+					_gameNet.playerCardList.RemoveAt(playCardData.handIndex);
+					_gameNet.playerCardNames.RemoveAt(playCardData.handIndex);
+					
 					turnEnd(playCardData.cardIndex, playCardData.handIndex, playCardData.cardObject);
 				}
 				break;

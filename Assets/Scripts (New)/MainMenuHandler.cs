@@ -6,9 +6,18 @@ public class MainMenuHandler : MonoBehaviour
     [SerializeField] private GameObject muteButton;
     [SerializeField] private GameObject unmuteButton;
     [SerializeField] private AudioSource[] audioSources;
+    [SerializeField] private GameObject setHostButton;
+    
+    public void EnableHost()
+    {
+        Bridge.GetInstance().thisPlayerInfo.data.multiplayer.isHost = true;
+    }
     
     private void Start()
     {
+        if (Bridge.GetInstance().testing && setHostButton != null)
+            setHostButton.SetActive(true);
+
         if (!Bridge.GetInstance().thisPlayerInfo.sound)
         {
             unmuteButton.SetActive(true);

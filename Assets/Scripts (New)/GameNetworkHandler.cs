@@ -25,6 +25,8 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     public Animator userProfileAnim;
     public TimerHandler timer;
     public GameObject[] otherPlayersNamesHandler;
+    public List<GameObject> playerCardList = new List<GameObject>();
+    public List<string> playerCardNames = new List<string>();
     
     [SerializeField] private Control control;
     [SerializeField] private GameObject waitingUI;
@@ -42,6 +44,7 @@ public class GameNetworkHandler : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject[] otherCatchButtons;
     [SerializeField] private Transform movingDeck;
     [SerializeField] private Transform movingDeckPosition;
+    public AudioSource cardPlay;
     
     private bool _assignedPlayerLocation;
     private int _imagesDownloaded;

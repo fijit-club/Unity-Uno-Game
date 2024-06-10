@@ -10,7 +10,7 @@ public class PlayCardData : MonoBehaviour
     [SerializeField] private RawImage childCard;
     [SerializeField] private Transform[] children;
     [SerializeField] private GameObject darkOverlay;
-
+    
     public void UpdateCard()
     {
         childCard.texture = GetComponent<RawImage>().texture;
@@ -38,5 +38,10 @@ public class PlayCardData : MonoBehaviour
     {
         var tempCard = childCard.transform;
         tempCard.DOLocalMoveY(100f, .3f);
+    }
+    public void MoveDown()
+    {
+        var tempCard = childCard.transform;
+        tempCard.DOLocalMoveY(0f, .3f);
     }
 }
