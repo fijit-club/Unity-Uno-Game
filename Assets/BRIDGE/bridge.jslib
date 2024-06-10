@@ -7,6 +7,15 @@ const plugin = {
       console.warn('Failed to dispatch event');
     }
   },
+  setSound: function (isOn) {
+    try {
+      const data = { event: 'SOUND_CTRL', payload: { isOn } };
+      if(window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(data));
+	    if(window.dispatchReactUnityEvent) window.dispatchReactUnityEvent('gameEvent', JSON.stringify(data));
+    } catch (e) {
+      console.warn('Failed to dispatch event ',e);
+    }
+  },
   vibrate: function (isLong) {
     try {
       const data = { event: 'VIBRATE', payload: { isLong } };

@@ -1016,7 +1016,7 @@ MonoBehaviour:
         lobbySize: 3
         isHost: 0
   coinsCollected: 0
-  testing: 1
+  testing: 0
   menu: {fileID: 16277544}
 --- !u!82 &275454642
 AudioSource:
